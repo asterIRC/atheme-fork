@@ -74,7 +74,7 @@ static void chanserv(sourceinfo_t *si, int parc, char *parv[])
 	}
 
 	/* is this a fantasy command? */
-	if (parv[parc - 2][0] == '#')
+	if (VALID_CHANNEL_PFX(parv[parc - 2]))
 	{
 		metadata_t *md;
 

@@ -60,7 +60,7 @@ static void bs_cmd_info(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (parv[0][0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 	{
 		mc = mychan_find(dest);
 	}

@@ -90,7 +90,7 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 
 	if (nicksvs.no_nick_ownership || si->su == NULL)
 	{
-		if (strchr(account, ' ') || strchr(account, '\n') || strchr(account, '\r') || account[0] == '=' || account[0] == '#' || account[0] == '@' || account[0] == '+' || account[0] == '%' || account[0] == '!' || strchr(account, ','))
+		if (strchr(account, ' ') || strchr(account, '\n') || strchr(account, '\r') || account[0] == '=' || VALID_CHANNEL_PFX(account) || account[0] == '@' || account[0] == '+' || account[0] == '%' || account[0] == '!' || strchr(account, ','))
 		{
 			command_fail(si, fault_badparams, _("The account name \2%s\2 is invalid."), account);
 			return;

@@ -96,7 +96,7 @@ static void ms_cmd_send(sourceinfo_t *si, int parc, char *parv[])
 	if (memoserv == NULL)
 		memoserv = si->service;
 
-	if (*target != '#' && *target != '!')
+	if (!VALID_CHANNEL_PFX(target) && *target != '!')
 	{
 		/* See if target is valid */
 		if (!(tmu = myuser_find_ext(target)))
@@ -189,7 +189,7 @@ static void ms_cmd_send(sourceinfo_t *si, int parc, char *parv[])
 		/* Tell user memo sent */
 		command_success_nodata(si, _("The memo has been successfully sent to \2%s\2."), target);
 	}
-	else if (*target == '#')
+	else if (VALID_CHANNEL_PFX(target))
 	{
 		cmd = command_find(memoserv->commands, "SENDOPS");
 		if (cmd != NULL)

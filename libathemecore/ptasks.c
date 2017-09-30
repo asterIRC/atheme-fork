@@ -538,7 +538,7 @@ void handle_message(sourceinfo_t *si, char *target, bool is_notice, char *messag
 		return;
 
 	/* if this is a channel, handle it differently. */
-	if (*target == '#')
+	if (VALID_CHANNEL_PFX(target))
 	{
 		handle_channel_message(si, target, is_notice, message);
 		return;

@@ -579,7 +579,7 @@ static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 	 * is not used in bursts and users are not allowed to change away
 	 * status using MODE.
 	 * -- jilles */
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else if (!strcmp(parv[1], "-a"))
 		handle_away(user_find(parv[0]), NULL);

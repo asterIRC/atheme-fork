@@ -461,7 +461,7 @@ static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 	user_t *u;
 	char *p;
 
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else
 	{

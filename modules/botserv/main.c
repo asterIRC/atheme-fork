@@ -90,7 +90,7 @@ bs_msg(const char *from, const char *target, const char *fmt, ...)
 	}
 	va_end(ap);
 
-	if (*target == '#' && !strcmp(from, chansvs.nick))
+	if (VALID_CHANNEL_PFX(target) && !strcmp(from, chansvs.nick))
 	{
 		mychan_t *mc;
 		botserv_bot_t *bot = NULL;
@@ -124,7 +124,7 @@ bs_notice(const char *from, const char *target, const char *fmt, ...)
 	}
 	va_end(ap);
 
-	if (*target == '#' && !strcmp(from, chansvs.nick))
+	if (VALID_CHANNEL_PFX(target) && !strcmp(from, chansvs.nick))
 	{
 		mychan_t *mc;
 		botserv_bot_t *bot = NULL;

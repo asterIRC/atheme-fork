@@ -847,7 +847,7 @@ char *xmlrpc_decode_string(char *buf)
 				*q++ = '"', p += 5;
 			else if (!strncmp(p, "amp;", 4))
 				*q++ = '&', p += 4;
-			else if (*p == '#')
+			else if (VALID_CHANNEL_PFX(p))
 			{
 				p++;
 				*q++ = (char)atoi(p);

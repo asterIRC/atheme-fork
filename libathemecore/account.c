@@ -1395,9 +1395,9 @@ chanacs_t *chanacs_add(mychan_t *mychan, myentity_t *mt, unsigned int level, tim
 
 	return_val_if_fail(mychan != NULL && mt != NULL, NULL);
 
-	if (*mychan->name != '#')
+	if (!VALID_CHANNEL_PFX(mychan->name))
 	{
-		slog(LG_DEBUG, "chanacs_add(): got non #channel: %s", mychan->name);
+		slog(LG_DEBUG, "chanacs_add(): got invalid channel: %s", mychan->name);
 		return NULL;
 	}
 
@@ -1449,7 +1449,7 @@ chanacs_t *chanacs_add_host(mychan_t *mychan, const char *host, unsigned int lev
 
 	return_val_if_fail(mychan != NULL && host != NULL, NULL);
 
-	if (*mychan->name != '#')
+	if (!VALID_CHANNEL_PFX(mychan->name))
 	{
 		slog(LG_DEBUG, "chanacs_add_host(): got non #channel: %s", mychan->name);
 		return NULL;

@@ -44,7 +44,7 @@ static void cs_cmd_mark(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (target[0] != '#')
+	if (!VALID_CHANNEL_PFX(target))
 	{
 		command_fail(si, fault_badparams, STR_INVALID_PARAMS, "MARK");
 		return;

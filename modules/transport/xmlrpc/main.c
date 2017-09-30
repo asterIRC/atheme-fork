@@ -573,7 +573,7 @@ static int xmlrpcmethod_metadata(void *conn, int parc, char *parv[])
 		return 0;
 	}
 
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 	{
 		mychan_t *mc;
 

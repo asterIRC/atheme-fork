@@ -713,7 +713,7 @@ static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 {
 	channel_t *c;
 
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 	{
 		c = channel_find(parv[0]);
 		if (c == NULL)

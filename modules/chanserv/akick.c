@@ -138,9 +138,9 @@ static void cs_cmd_akick(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (parv[0][0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		chan = parv[0], cmd = parv[1];
-	else if (parv[1][0] == '#')
+	else if (VALID_CHANNEL_PFX(parv[1]))
 		cmd = parv[0], chan = parv[1];
 	else
 	{

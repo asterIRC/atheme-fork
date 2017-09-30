@@ -9,9 +9,13 @@
 #ifndef CHANNELS_H
 #define CHANNELS_H
 
-#define VALID_GLOBAL_CHANNEL_PFX(name)	(*(name) == '#' || *(name) == '+' || *(name) == '!')
-#define VALID_CHANNEL_PFX(name)		(VALID_GLOBAL_CHANNEL_PFX(name) || *(name) == '&')
+#ifndef VALID_GLOBAL_CHANNEL_PFX
+#define VALID_GLOBAL_CHANNEL_PFX(name)	(*(name) == '#' || *(name) == '+' || *(name) == '!' || *(name) == '"' || (strlen(name) != 9 && (*(name) == '0' || *(name) == '1' || *(name) == '2' || *(name) == '3' || *(name) == '4' || *(name) == '5' || *(name) == '6' || *(name) == '7' || *(name) == '8' || *(name) == '9')))
+#endif
 
+#ifndef VALID_CHANNEL_PFX
+#define VALID_CHANNEL_PFX(name)		(VALID_GLOBAL_CHANNEL_PFX(name) || *(name) == '&')
+#endif
 struct channel_
 {
   char *name;

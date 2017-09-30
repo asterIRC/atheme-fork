@@ -1116,7 +1116,7 @@ static void inspircd_user_mode(user_t *u, const char *modes)
 
 static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else
 		inspircd_user_mode(user_find(parv[0]), parv[1]);
@@ -1128,7 +1128,7 @@ static void m_fmode(sourceinfo_t *si, int parc, char *parv[])
 	time_t ts;
 
 	/* :server.moo FMODE #blarp tshere +ntsklLg keymoo 1337 secks */
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 	{
 		c = channel_find(parv[0]);
 		if (c == NULL)

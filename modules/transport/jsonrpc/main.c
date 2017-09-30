@@ -641,7 +641,7 @@ static bool jsonrpcmethod_metadata(void *conn, mowgli_list_t *params, char *id)
 		return 0;
 	}
 
-	if (*name == '#')
+	if (VALID_CHANNEL_PFX(name))
 	{
 		mychan_t *mc;
 

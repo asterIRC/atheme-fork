@@ -1056,7 +1056,7 @@ static void m_quit(sourceinfo_t *si, int parc, char *parv[])
 
 static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else
 		user_mode(user_find(parv[0]), parv[1]);

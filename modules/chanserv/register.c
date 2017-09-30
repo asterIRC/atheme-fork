@@ -59,7 +59,7 @@ static void cs_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (*name != '#')
+	if (!VALID_CHANNEL_PFX(name))
 	{
 		command_fail(si, fault_badparams, STR_INVALID_PARAMS, "REGISTER");
 		command_fail(si, fault_badparams, _("Syntax: REGISTER <#channel>"));

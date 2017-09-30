@@ -49,7 +49,7 @@ static void cs_cmd_info(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (*name != '#')
+	if (!VALID_CHANNEL_PFX(name))
 	{
 		command_fail(si, fault_badparams, STR_INVALID_PARAMS, "INFO");
 		command_fail(si, fault_badparams, _("Syntax: INFO <#channel>"));

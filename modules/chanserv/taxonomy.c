@@ -38,7 +38,7 @@ void cs_cmd_taxonomy(sourceinfo_t *si, int parc, char *parv[])
 	metadata_t *md;
 	bool isoper;
 
-	if (!target || *target != '#')
+	if (!target || !VALID_CHANNEL_PFX(target))
 	{
 		command_fail(si, fault_needmoreparams, STR_INSUFFICIENT_PARAMS, "TAXONOMY");
 		command_fail(si, fault_needmoreparams, _("Syntax: TAXONOMY <#channel>"));

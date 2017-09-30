@@ -602,7 +602,7 @@ static void ngircd_user_mode(user_t *u, const char *modes)
 
 static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else if (*parv[0] == '!')
 		;

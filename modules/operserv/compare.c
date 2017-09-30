@@ -53,9 +53,9 @@ static void os_cmd_compare(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (*object1 == '#')
+	if (VALID_CHANNEL_PFX(object1))
 	{
-		if (*object2 == '#')
+		if (VALID_CHANNEL_PFX(object2))
 		{
 			/* compare on two channels */
 			c1 = channel_find(object1);
@@ -110,7 +110,7 @@ static void os_cmd_compare(sourceinfo_t *si, int parc, char *parv[])
 	}
 	else
 	{
-		if (*object2 == '#')
+		if (VALID_CHANNEL_PFX(object2))
 		{
 			/* bad syntax */
 			command_fail(si, fault_badparams, _("Bad syntax for @compare. Use @compare on two channels, or two users."));

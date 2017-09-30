@@ -212,7 +212,7 @@ static bool check_flood(const char *value, channel_t *c, mychan_t *mc, user_t *u
 
 		if (*p != '\0')
 		{
-			if (*p == '#')
+			if (VALID_CHANNEL_PFX(p))
 			{
 				p++;
 
@@ -545,7 +545,7 @@ static void unreal_qline_sts(const char *server, const char *name, long duration
 {
 	service_t *svs;
 
-	if (*name == '#' || *name == '&')
+	if (VALID_CHANNEL_PFX(name) || *name == '&')
 	{
 		slog(LG_INFO, "SQLINE: Could not set SQLINE on \2%s\2, not supported by unrealircd.", name);
 		return;
@@ -1263,7 +1263,7 @@ static bool unreal_is_extban(const char *mask)
 
 static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 		channel_mode(NULL, channel_find(parv[0]), parc - 1, &parv[1]);
 	else
 		unreal_user_mode(user_find(parv[0]), parv[1]);

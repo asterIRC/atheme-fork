@@ -170,7 +170,7 @@ static void os_cmd_override(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (*parv[0] == '#')
+	if (VALID_CHANNEL_PFX(parv[0]))
 	{
 		mychan_t *mc;
 		mowgli_node_t *n;

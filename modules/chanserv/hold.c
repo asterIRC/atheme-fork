@@ -43,7 +43,7 @@ static void cs_cmd_hold(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (*target != '#')
+	if (!VALID_CHANNEL_PFX(target))
 	{
 		command_fail(si, fault_badparams, STR_INVALID_PARAMS, "HOLD");
 		return;

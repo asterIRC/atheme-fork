@@ -64,7 +64,7 @@ static void ms_cmd_list(sourceinfo_t *si, int parc, char *parv[])
 
 		snprintf(line, sizeof line, _("- %d From: %s Sent: %s"),
 				i, memo->sender, strfbuf);
-		if (memo->status & MEMO_CHANNEL && *memo->text == '#')
+		if (memo->status & MEMO_CHANNEL && VALID_CHANNEL_PFX(memo->text))
 		{
 			mowgli_strlcat(line, " ", sizeof line);
 			mowgli_strlcat(line, _("To:"), sizeof line);

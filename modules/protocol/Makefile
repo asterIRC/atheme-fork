@@ -26,6 +26,7 @@ SRCS = \
 	p10-generic.c	\
 	ratbox.c	\
 	ts6-generic.c	\
+	ircd-chatd.c	\
 	unreal.c	\
 	unreal4.c
 
