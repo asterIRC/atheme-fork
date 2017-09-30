@@ -1180,6 +1180,13 @@ chanserv {
 	 */
 	real = "Channel Services";
 
+	/* reggroup 
+	 * The group that will receive Memos about
+	 * channel Registration requests when
+	 * chanserv/moderate is loaded.
+	 */
+	#reggroup = "!Services-Team";
+
 	/* (*)aliases
 	 * Command aliases for ChanServ.
 	 */
@@ -1747,6 +1754,12 @@ hostserv {
 	 */
 	real = "Host Management Services";
 
+	/* reggroup 
+	 * The group that will receive Memos about
+	 * vHost requests.
+	 */
+	#reggroup = "!Services-Team";
+
 	/* (*)request_per_nick
 	 * Whether the request system should work per nick or per account.
 	 * The recommended setting is to leave this disabled, so that
@@ -2096,6 +2109,12 @@ general {
 	 * nickserv/register and chanserv/register.
 	 */
 	ratelimit_period = 60;
+
+	/* (*)vhost_change
+	 * The default number of days between vHost changes once a user has used HostServ
+	 * TAKE or REQUEST.  (Helps to deter rabid host-swappers and ban evaders.)
+	 */
+	#vhost_change = 30;
 
 	/* (*)kline_time
 	 * The default expire time for KLINE's in days.
