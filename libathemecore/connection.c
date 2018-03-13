@@ -609,6 +609,10 @@ connection_t *connection_accept_tcp(connection_t *cptr,
 
 	mowgli_strlcpy(buf, "incoming connection", BUFSIZE);
 	newptr = connection_add(buf, s, 0, read_handler, write_handler);
+	if (newptr == NULL) {
+		slog(LG_ERROR, "connection_accept_tcp(): newptr is NULL after incoming connection occurs; balking to prevent services crash");
+		return NULL;
+	}
 	newptr->listener = cptr;
 	return newptr;
 }

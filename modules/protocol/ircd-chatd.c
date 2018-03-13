@@ -41,7 +41,7 @@ ircd_t Chatd = {
 	.ban_like_modes = "beIq",
 	.except_mchar = 'e',
 	.invex_mchar = 'I',
-	.flags = IRCD_CIDR_BANS | IRCD_HOLDNICK,
+	.flags = IRCD_CIDR_BANS | IRCD_HOLDNICK | IRCD_ENCAP_FJOIN,
 };
 
 struct cmode_ chatd_mode_list[] = {
