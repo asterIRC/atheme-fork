@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012 William Pitcock <nenolod@dereferenced.org>.
+ * Copyright (C) 2012 William Pitcock <nenolod@dereferenced.org>
+ * Copyright (C) 2017-2018 Aaron M. D. Jones <aaronmdjones@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,62 +21,49 @@
 
 #include "atheme.h"
 
-#ifdef HAVE_OPENSSL
+#define ATHEME_PBKDF2_ROUNDS    128000
+#define ATHEME_PBKDF2_SALTLEN   16
 
-DECLARE_MODULE_V1("crypto/pbkdf2", false, _modinit, _moddeinit, PACKAGE_VERSION, VENDOR_STRING);
-
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-
-#define ROUNDS		(128000)
-#define SALTLEN		(16)
-
-static const char *pbkdf2_salt(void)
+static bool
+atheme_pbkdf2_verify(const char *const restrict password, const char *const restrict parameters,
+                     unsigned int __attribute__((unused)) *const restrict flags)
 {
-	static char buf[SALTLEN + 1];
-	char *randstr = random_string(SALTLEN);
+	if (strlen(parameters) != (ATHEME_PBKDF2_SALTLEN + (2 * DIGEST_MDLEN_SHA2_512)))
+		return false;
 
-	mowgli_strlcpy(buf, randstr, sizeof buf);
+	unsigned char buf[DIGEST_MDLEN_SHA2_512];
+	const bool ret = digest_pbkdf2_hmac(DIGALG_SHA2_512, password, strlen(password), parameters,
+	                                    ATHEME_PBKDF2_SALTLEN, ATHEME_PBKDF2_ROUNDS, buf, sizeof buf);
 
-	free(randstr);
+	if (! ret)
+		return false;
 
-	return buf;
+	char result[(2 * DIGEST_MDLEN_SHA2_512) + 1];
+	for (size_t i = 0; i < DIGEST_MDLEN_SHA2_512; i++)
+		(void) sprintf(result + (i * 2), "%02x", 255 & buf[i]);
+
+	if (strcmp(result, parameters + ATHEME_PBKDF2_SALTLEN) != 0)
+		return false;
+
+	return true;
 }
 
-static const char *pbkdf2_crypt(const char *key, const char *salt)
-{
-	static char outbuf[PASSLEN];
-	static unsigned char digestbuf[SHA512_DIGEST_LENGTH];
-	int res, iter;
+static crypt_impl_t crypto_pbkdf2_impl = {
 
-	if (strlen(salt) < SALTLEN)
-		salt = pbkdf2_salt();
-
-	memcpy(outbuf, salt, SALTLEN);
-
-	res = PKCS5_PBKDF2_HMAC(key, strlen(key), (const unsigned char *)salt, SALTLEN, ROUNDS, EVP_sha512(), SHA512_DIGEST_LENGTH, digestbuf);
-
-	for (iter = 0; iter < SHA512_DIGEST_LENGTH; iter++)
-		sprintf(outbuf + SALTLEN + (iter * 2), "%02x", 255 & digestbuf[iter]);
-
-	return outbuf;
-}
-
-static crypt_impl_t pbkdf2_crypt_impl = {
-	.id = "pbkdf2",
-	.crypt = &pbkdf2_crypt,
-	.salt = &pbkdf2_salt
+	.id         = "pbkdf2",
+	.verify     = &atheme_pbkdf2_verify,
 };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t __attribute__((unused)) *const restrict m)
 {
-	crypt_register(&pbkdf2_crypt_impl);
+	(void) crypt_register(&crypto_pbkdf2_impl);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t __attribute__((unused)) intent)
 {
-	crypt_unregister(&pbkdf2_crypt_impl);
+	(void) crypt_unregister(&crypto_pbkdf2_impl);
 }
 
-#endif
+SIMPLE_DECLARE_MODULE_V1("crypto/pbkdf2", MODULE_UNLOAD_CAPABILITY_OK)

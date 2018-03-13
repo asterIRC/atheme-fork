@@ -40,18 +40,19 @@ typedef enum {
 #define MAXMODES		4
 #define MAX_IRC_OUTPUT_LINES	2000
 
-/* lengths of buffers (string length is 1 less) */
-#define HOSTLEN			64		/* seems good enough */
-#define NICKLEN			32
-#define PASSLEN			289		/* 32 bytes salt + 1024 bits digest + null */
-#define IDLEN			10
-#define CHANNELLEN		201
-#define USERLEN			12
-#define HOSTIPLEN		54
-#define GECOSLEN		51
-#define KEYLEN			24
-#define EMAILLEN		120
-#define MEMOLEN			300
+/* lengths of various pieces of information (without NULL terminators) */
+#define HOSTLEN			63		/* seems good enough */
+#define NICKLEN			50
+#define PASSLEN			288		/* 32 bytes salt + 1024 bits digest */
+#define IDLEN			9
+#define CHANNELLEN		200
+#define GROUPLEN		31
+#define USERLEN			11
+#define HOSTIPLEN		53
+#define GECOSLEN		50
+#define KEYLEN			23
+#define EMAILLEN		254
+#define MEMOLEN			299
 
 #define MAXMSIGNORES		40
 
@@ -127,7 +128,8 @@ enum faultcode_
 	fault_nochange		= 12,
 	fault_already_authed	= 13,
 	fault_unimplemented	= 14,
-	fault_badauthcookie	= 15
+	fault_badauthcookie	= 15,
+	fault_internalerror	= 16,
 };
 
 typedef enum faultcode_ cmd_faultcode_t;

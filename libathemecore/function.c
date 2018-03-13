@@ -23,43 +23,50 @@
 
 #include "atheme.h"
 
-char ch[] = "abcdefghijklmnopqrstuvwxyz";
-
 /* This function uses smalloc() to allocate memory.
- * You MUST free the result when you are done with it!
+ * You MUST free() the result when you are done with it!
  */
-char *random_string(int sz)
+char *
+random_string(const size_t sz)
 {
-	int i;
-	char *buf = smalloc(sz + 1); /* padding */
+	static const char ch[62] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-	for (i = 0; i < sz; i++)
-	{
-		buf[i] = ch[arc4random() % 26];
-	}
+	unsigned char *const buf = smalloc(sz + 1); /* NULL terminator */
 
-	buf[sz] = 0;
+	(void) arc4random_buf(buf, sz);
 
-	return buf;
+	for (size_t i = 0; i < sz; i++)
+		buf[i] = ch[buf[i] % sizeof ch];
+
+	return (char *) buf;
 }
 
-void create_challenge(sourceinfo_t *si, const char *name, int v, char *dest)
+const char *
+create_weak_challenge(sourceinfo_t *const restrict si, const char *const restrict name)
 {
-	char buf[256];
-	int digest[4];
-	md5_state_t ctx;
+	char key[BUFSIZE];
+	char val[BUFSIZE];
 
-	snprintf(buf, sizeof buf, "%lu:%s:%s",
-			(unsigned long)(CURRTIME / 300) - v,
-			get_source_name(si),
-			name);
-	md5_init(&ctx);
-	md5_append(&ctx, (unsigned char *)buf, strlen(buf));
-	md5_finish(&ctx, (unsigned char *)digest);
-	/* note: this depends on byte order, but that's ok because
-	 * it's only going to work in the same atheme instance anyway
-	 */
-	snprintf(dest, 80, "%x:%x", digest[0], digest[1]);
+	(void) memset(key, 0x00, sizeof key);
+	(void) memset(val, 0x00, sizeof val);
+
+	(void) mowgli_strlcpy(key, get_source_name(si), sizeof key);
+	(void) mowgli_strlcpy(val, name, sizeof val);
+
+	uint32_t out[4];
+
+	if (! digest_oneshot_hmac(DIGALG_MD5, key, sizeof key, val, sizeof val, out, NULL))
+		return NULL;
+
+	static char result[BUFSIZE];
+
+	if (snprintf(result, BUFSIZE, "%" PRIX32 ":%" PRIX32, out[0], out[1]) >= BUFSIZE)
+	{
+		(void) slog(LG_ERROR, "%s: snprintf(3) would have overflowed result buffer (BUG)", __func__);
+		return NULL;
+	}
+
+	return result;
 }
 
 #ifdef HAVE_GETTIMEOFDAY
@@ -238,7 +245,7 @@ int validemail(const char *email)
 	const char *lastdot = NULL;
 
 	/* sane length */
-	if (strlen(email) >= EMAILLEN)
+	if (strlen(email) > EMAILLEN)
 		return 0;
 
 	/* RFC2822 */
@@ -260,7 +267,10 @@ int validemail(const char *email)
 				return 0;
 		}
 		else if (c == '@')
-			atcnt++, dotcnt1 = 0;
+		{
+			atcnt++;
+			dotcnt1 = 0;
+		}
 		else if ((c >= 'a' && c <= 'z') ||
 				(c >= 'A' && c <= 'Z') ||
 				(c >= '0' && c <= '9') ||
@@ -363,7 +373,7 @@ stringref canonicalize_email(const char *email)
 	return strshare_get(buf);
 }
 
-void canonicalize_email_case(char email[EMAILLEN + 1], void *user_data)
+void canonicalize_email_case(char email[static (EMAILLEN + 1)], void *user_data)
 {
 	strcasecanon(email);
 }
@@ -421,7 +431,7 @@ bool validhostmask(const char *host)
 		return false;
 
 	/* XXX this NICKLEN is too long */
-	if (strlen(host) > NICKLEN + USERLEN + HOSTLEN + 1)
+	if (strlen(host) > NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1)
 		return false;
 
 	if (host[0] == ',' || host[0] == '-' || host[0] == '#' ||
@@ -516,10 +526,10 @@ char *pretty_mask(char *mask)
         }
 
         /* truncate values to max lengths */
-        if(strlen(nick) > NICKLEN - 1)
+        if(strlen(nick) > NICKLEN)
         {
-                ne = nick[NICKLEN - 1];
-                nick[NICKLEN - 1] = '\0';
+                ne = nick[NICKLEN];
+                nick[NICKLEN] = '\0';
         }
         if(strlen(user) > USERLEN)
         {
@@ -540,7 +550,7 @@ char *pretty_mask(char *mask)
         if(ex)
                 *ex = '!';
         if(ne)
-                nick[NICKLEN - 1] = ne;
+                nick[NICKLEN] = ne;
         if(ue)
                 user[USERLEN] = ue;
         if(he)
@@ -822,13 +832,13 @@ bool is_service(user_t *user)
 
 char *sbytes(float x)
 {
-	if (x > 1073741824.0)
+	if (x > 1073741824.0f)
 		return "GB";
 
-	else if (x > 1048576.0)
+	else if (x > 1048576.0f)
 		return "MB";
 
-	else if (x > 1024.0)
+	else if (x > 1024.0f)
 		return "KB";
 
 	return "B";
@@ -836,14 +846,14 @@ char *sbytes(float x)
 
 float bytes(float x)
 {
-	if (x > 1073741824.0)
-		return (x / 1073741824.0);
+	if (x > 1073741824.0f)
+		return (x / 1073741824.0f);
 
-	if (x > 1048576.0)
-		return (x / 1048576.0);
+	if (x > 1048576.0f)
+		return (x / 1048576.0f);
 
-	if (x > 1024.0)
-		return (x / 1024.0);
+	if (x > 1024.0f)
+		return (x / 1024.0f);
 
 	return x;
 }

@@ -11,9 +11,6 @@
 
 /* *INDENT-OFF* */
 
-#define E extern
-#define DLE
-
 #include "sysconf.h"
 #include "stdinc.h"
 #include "i18n.h"
@@ -32,8 +29,7 @@
 #include "crypto.h"
 #include "culture.h"
 #include "base64.h"
-#include "md5.h"
-#include "sasl.h"
+#include "digest.h"
 #include "match.h"
 #include "sysconf.h"
 #include "account.h"
@@ -48,6 +44,7 @@
 #include "services.h"
 #include "users.h"
 #include "sourceinfo.h"
+#include "sasl.h"
 #include "taint.h"
 #include "database_backend.h"
 #include "entity.h"

@@ -5,14 +5,11 @@
  * This file contains protocol support for P10 ircd's.
  * Some sources used: Run's documentation, beware's description,
  * raw data sent by asuka.
- *
  */
 
 #include "atheme.h"
 #include "uplink.h"
 #include "pmodule.h"
-
-DECLARE_MODULE_V1("protocol/p10-generic", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
 
 static void check_hidehost(user_t *u);
 
@@ -317,7 +314,7 @@ static void p10_jupe(const char *server, const char *reason)
 	sts("%s JU * +%s %d %lu :%s", me.numeric, server, 86400, (unsigned long)CURRTIME, reason);
 }
 
-static void p10_sasl_sts(char *target, char mode, char *data)
+static void p10_sasl_sts(const char *target, char mode, const char *data)
 {
 	sts("%s XR %c%c %s :SASL:%c:%s", me.numeric, target[0], target[1], target, mode, data);
 }
@@ -482,7 +479,7 @@ static void m_burst(sourceinfo_t *si, int parc, char *parv[])
 	unsigned int i;
 	int j;
 	char prefix[16];
-	char newnick[16+NICKLEN];
+	char newnick[sizeof prefix + NICKLEN + 1];
 	char *p;
 	time_t ts;
 	bool keep_new_modes = true;
@@ -612,7 +609,7 @@ static void m_part(sourceinfo_t *si, int parc, char *parv[])
 static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 {
 	user_t *u;
-	char ipstring[HOSTIPLEN];
+	char ipstring[HOSTIPLEN + 1];
 	char *p;
 
 	/* got the right number of args for an introduction? */
@@ -813,13 +810,13 @@ static void m_kick(sourceinfo_t *si, int parc, char *parv[])
 
 	if (!u)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick for nonexistant user %s", parv[1]);
+		slog(LG_DEBUG, "m_kick(): got kick for nonexistent user %s", parv[1]);
 		return;
 	}
 
 	if (!c)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick in nonexistant channel: %s", parv[0]);
+		slog(LG_DEBUG, "m_kick(): got kick in nonexistent channel: %s", parv[0]);
 		return;
 	}
 
@@ -913,7 +910,8 @@ static void m_away(sourceinfo_t *si, int parc, char *parv[])
 
 static void m_pass(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (strcmp(curr_uplink->receive_pass, parv[0]))
+	if (curr_uplink->receive_pass != NULL &&
+	    strcmp(curr_uplink->receive_pass, parv[0]))
 	{
 		slog(LG_INFO, "m_pass(): password mismatch from uplink; aborting");
 		runflags |= RF_SHUTDOWN;
@@ -976,7 +974,8 @@ static void check_hidehost(user_t *u)
 	slog(LG_DEBUG, "check_hidehost(): %s -> %s", u->nick, u->vhost);
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "transport/p10");
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/base36uid");
@@ -1052,8 +1051,9 @@ void _modinit(module_t * m)
 	m->mflags = MODTYPE_CORE;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/p10-generic", MODULE_UNLOAD_CAPABILITY_NEVER)

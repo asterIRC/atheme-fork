@@ -404,13 +404,13 @@ void remove_group_chanacs(mygroup_t *mg)
 void mygroup_rename(mygroup_t *mg, const char *name)
 {
 	stringref newname;
-	char nb[NICKLEN];
+	char nb[GROUPLEN + 1];
 
 	return_if_fail(mg != NULL);
 	return_if_fail(name != NULL);
-	return_if_fail(strlen(name) < NICKLEN);
+	return_if_fail(strlen(name) < sizeof nb);
 
-	mowgli_strlcpy(nb, entity(mg)->name, NICKLEN);
+	mowgli_strlcpy(nb, entity(mg)->name, sizeof nb);
 	newname = strshare_get(name);
 
 	myentity_del(entity(mg));

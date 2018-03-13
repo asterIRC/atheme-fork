@@ -3,23 +3,16 @@
  * Rights to this code are as documented in doc/LICENSE.
  *
  * This file contains code for the CService SENDPASS function.
- *
  */
 
 #include "atheme.h"
-
-DECLARE_MODULE_V1
-(
-	"nickserv/sendpass_user", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[]);
 
 command_t ns_sendpass = { "SENDPASS", N_("Email registration passwords."), AC_NONE, 2, ns_cmd_sendpass, { .path = "nickserv/sendpass_user" } };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_CONFLICT(m, "nickserv/sendpass")
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "nickserv/setpass");
@@ -27,7 +20,8 @@ void _modinit(module_t *m)
 	service_named_bind_command("nickserv", &ns_sendpass);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_named_unbind_command("nickserv", &ns_sendpass);
 }
@@ -130,14 +124,23 @@ static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[])
 	}
 
 	key = random_string(12);
+
+	const char *const hash = crypt_password(key);
+
+	if (!hash)
+	{
+		command_fail(si, fault_internalerror, _("Hash generation for password change key failed."));
+		free(key);
+		return;
+	}
 	if (sendemail(si->su != NULL ? si->su : si->service->me, mu, EMAIL_SETPASS, mu->email, key))
 	{
 		if (ismarked)
 			wallops("%s sent the password for the \2MARKED\2 account %s.", get_oper_name(si), entity(mu)->name);
 		logcommand(si, CMDLOG_ADMIN, "SENDPASS: \2%s\2 (change key)", name);
-		metadata_add(mu, "private:setpass:key", crypt_string(key, gen_salt()));
 		metadata_add(mu, "private:sendpass:sender", get_oper_name(si));
 		metadata_add(mu, "private:sendpass:timestamp", number_to_string(time(NULL)));
+		metadata_add(mu, "private:setpass:key", hash);
 		command_success_nodata(si, _("The password change key for \2%s\2 has been sent to the corresponding email address."), entity(mu)->name);
 	}
 	else
@@ -145,8 +148,4 @@ static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[])
 	free(key);
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("nickserv/sendpass_user", MODULE_UNLOAD_CAPABILITY_OK)

@@ -21,13 +21,9 @@
 #include "atheme.h"
 #include "libathemecore.h"
 
-#if defined HAVE_OPENSSL && defined HAVE_OPENSSL_EC_H
-
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
 
 int main(int argc, const char **argv)
 {
@@ -57,33 +53,34 @@ int main(int argc, const char **argv)
 	}
 
 	memset(challenge, '\0', sizeof challenge);
-	len = base64_decode(argv[2], challenge, BUFSIZE);
+	len = base64_decode(argv[2], challenge, sizeof challenge);
 	workbuf_p = (unsigned char *) challenge;
+
+	if (len == (size_t) -1)
+	{
+		fprintf(stderr, "Failed to decode challenge!\n");
+		return EXIT_FAILURE;
+	}
 
 	buf_len = ECDSA_size(eckey);
 	sig_buf = mowgli_alloc(buf_len);
 	sig_buf_p = sig_buf;
 
-	if (!ECDSA_sign(0, challenge, len, sig_buf_p, &buf_len, eckey))
+	if (!ECDSA_sign(0, workbuf_p, len, sig_buf_p, &buf_len, eckey))
 	{
 		fprintf(stderr, "Failed to sign challenge!\n");
 		return EXIT_FAILURE;
 	}
 
-	base64_encode(sig_buf, buf_len, challenge, BUFSIZE);
+	if (base64_encode(sig_buf, buf_len, challenge, sizeof challenge) == (size_t) -1)
+	{
+		fprintf(stderr, "Failed to encode signature!\n");
+		return EXIT_FAILURE;
+	}
+
 	printf("%s\n", challenge);
 
 	mowgli_free(sig_buf);
 
 	return EXIT_SUCCESS;
 }
-
-#else
-
-int main(int argc, const char **argv)
-{
-	printf("I'm sorry, you didn't compile Atheme with OpenSSL support.\n");
-	return EXIT_SUCCESS;
-}
-
-#endif

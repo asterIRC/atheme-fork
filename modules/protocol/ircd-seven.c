@@ -4,7 +4,6 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains protocol support for ircd-seven.
- *
  */
 
 #include "atheme.h"
@@ -12,10 +11,6 @@
 #include "pmodule.h"
 #include "protocol/charybdis.h"
 #include "protocol/ircd-seven.h"
-
-DECLARE_MODULE_V1("protocol/ircd-seven", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
-
-/* *INDENT-OFF* */
 
 ircd_t Seven = {
 	.ircdname = "ircd-seven",
@@ -79,8 +74,6 @@ struct cmode_ seven_user_mode_list[] = {
   { 'S', UF_SERVICE  },
   { '\0', 0 }
 };
-
-/* *INDENT-ON* */
 
 static bool seven_is_valid_hostslash(const char *host)
 {
@@ -179,7 +172,7 @@ static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 		s = server_find(parv[6]);
 		if (!s)
 		{
-			slog(LG_DEBUG, "m_nick(): new user on nonexistant server: %s", parv[6]);
+			slog(LG_DEBUG, "m_nick(): new user on nonexistent server: %s", parv[6]);
 			return;
 		}
 
@@ -274,7 +267,8 @@ static void nick_ungroup(hook_user_req_t *hdata)
 		sts(":%s ENCAP * IDENTIFIED %s %s OFF", ME, CLIENT_NAME(u), u->nick);
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/charybdis");
 
@@ -303,8 +297,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/ircd-seven", MODULE_UNLOAD_CAPABILITY_NEVER)

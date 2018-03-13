@@ -21,13 +21,9 @@
 #include "atheme.h"
 #include "libathemecore.h"
 
-#if defined HAVE_OPENSSL && defined HAVE_OPENSSL_EC_H
-
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/sha.h>
 
 int main(int argc, const char **argv)
 {
@@ -49,7 +45,12 @@ int main(int argc, const char **argv)
 	workbuf_p = workbuf;
 	i2o_ECPublicKey(prv, &workbuf_p);
 	workbuf_p = workbuf;
-	base64_encode((const char *)workbuf_p, len, encbuf, BUFSIZE);
+
+	if (base64_encode(workbuf_p, len, encbuf, sizeof encbuf) == (size_t) -1)
+	{
+		fprintf(stderr, "Failed to encode public key!\n");
+		return EXIT_FAILURE;
+	}
 
 	printf("Keypair:\n");
 	EC_KEY_print_fp(stdout, prv, 4);
@@ -63,13 +64,3 @@ int main(int argc, const char **argv)
 
 	return EXIT_SUCCESS;
 }
-
-#else
-
-int main(int argc, const char **argv)
-{
-	printf("I'm sorry, you didn't compile Atheme with OpenSSL support.\n");
-	return EXIT_SUCCESS;
-}
-
-#endif

@@ -12,10 +12,6 @@
 #include "pmodule.h"
 #include "protocol/bahamut.h"
 
-DECLARE_MODULE_V1("protocol/bahamut", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
-
-/* *INDENT-OFF* */
-
 ircd_t Bahamut = {
 	.ircdname = "Bahamut 1.8.x",
 	.tldprefix = "$",
@@ -82,8 +78,6 @@ struct cmode_ bahamut_user_mode_list[] = {
   { 'o', UF_IRCOP    },
   { '\0', 0 }
 };
-
-/* *INDENT-ON* */
 
 static bool check_jointhrottle(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu)
 {
@@ -627,7 +621,7 @@ static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 		s = server_find(parv[6]);
 		if (!s)
 		{
-			slog(LG_DEBUG, "m_nick(): new user on nonexistant server: %s", parv[6]);
+			slog(LG_DEBUG, "m_nick(): new user on nonexistent server: %s", parv[6]);
 			return;
 		}
 
@@ -739,13 +733,13 @@ static void m_kick(sourceinfo_t *si, int parc, char *parv[])
 
 	if (!u)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick for nonexistant user %s", parv[1]);
+		slog(LG_DEBUG, "m_kick(): got kick for nonexistent user %s", parv[1]);
 		return;
 	}
 
 	if (!c)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick in nonexistant channel: %s", parv[0]);
+		slog(LG_DEBUG, "m_kick(): got kick in nonexistent channel: %s", parv[0]);
 		return;
 	}
 
@@ -845,7 +839,8 @@ static void m_join(sourceinfo_t *si, int parc, char *parv[])
 
 static void m_pass(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (strcmp(curr_uplink->receive_pass, parv[0]))
+	if (curr_uplink->receive_pass != NULL &&
+	    strcmp(curr_uplink->receive_pass, parv[0]))
 	{
 		slog(LG_INFO, "m_pass(): password mismatch from uplink; aborting");
 		runflags |= RF_SHUTDOWN;
@@ -899,7 +894,8 @@ static void nick_ungroup(hook_user_req_t *hdata)
 		sts(":%s SVSMODE %s -r+d %lu", nicksvs.nick, u->nick, (unsigned long)CURRTIME);
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "transport/rfc1459");
 
@@ -979,8 +975,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/bahamut", MODULE_UNLOAD_CAPABILITY_NEVER)

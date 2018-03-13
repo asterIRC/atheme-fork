@@ -4,17 +4,12 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains protocol support for charybdis-based ircd.
- *
  */
 
 #include "atheme.h"
 #include "uplink.h"
 #include "pmodule.h"
 #include "protocol/charybdis.h"
-
-DECLARE_MODULE_V1("protocol/charybdis", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
-
-/* *INDENT-OFF* */
 
 ircd_t Charybdis = {
 	.ircdname = "Charybdis",
@@ -101,8 +96,6 @@ struct cmode_ charybdis_user_mode_list[] = {
   { '\0', 0 }
 };
 
-/* *INDENT-ON* */
-
 /* ircd allows forwards to existing channels; the target channel must be
  * +F or the setter must have ops in it */
 static bool check_forward(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu)
@@ -166,8 +159,8 @@ static bool check_jointhrottle(const char *value, channel_t *c, mychan_t *mc, us
 /* note that the host part matches differently from a regular ban */
 static bool extgecos_match(const char *mask, user_t *u)
 {
-	char hostgbuf[NICKLEN+USERLEN+HOSTLEN+GECOSLEN];
-	char realgbuf[NICKLEN+USERLEN+HOSTLEN+GECOSLEN];
+	char hostgbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1 + GECOSLEN + 1];
+	char realgbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1 + GECOSLEN + 1];
 
 	snprintf(hostgbuf, sizeof hostgbuf, "%s!%s@%s#%s", u->nick, u->user, u->vhost, u->gecos);
 	snprintf(realgbuf, sizeof realgbuf, "%s!%s@%s#%s", u->nick, u->user, u->host, u->gecos);
@@ -178,10 +171,10 @@ static mowgli_node_t *charybdis_next_matching_ban(channel_t *c, user_t *u, int t
 {
 	chanban_t *cb;
 	mowgli_node_t *n;
-	char hostbuf[NICKLEN+USERLEN+HOSTLEN];
-	char realbuf[NICKLEN+USERLEN+HOSTLEN];
-	char ipbuf[NICKLEN+USERLEN+HOSTLEN];
-	char strippedmask[NICKLEN+USERLEN+HOSTLEN+CHANNELLEN+2];
+	char hostbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char realbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char ipbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char strippedmask[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1 + CHANNELLEN + 3];
 	char *p;
 	bool negate, matched;
 	int exttype;
@@ -308,7 +301,8 @@ static bool charybdis_is_extban(const char *mask)
 	return false;
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/ts6-generic");
 
@@ -332,8 +326,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/charybdis", MODULE_UNLOAD_CAPABILITY_NEVER)

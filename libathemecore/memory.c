@@ -29,10 +29,14 @@
 # define RAISE_EXCEPTION raise(SIGUSR1)
 #endif
 
-/* does malloc()'s job and dies if malloc() fails */
+/* does malloc()'s job and dies if malloc() fails
+ *
+ * Note that this function MUST RETURN ZERO-INITIALIZED MEMORY
+ * Parts of the codebase assume this is so and will malfunction otherwise
+ */
 void *smalloc(size_t size)
 {
-        void *buf = calloc(size, 1);
+        void *buf = calloc(1, size);
 
         if (!buf)
                 RAISE_EXCEPTION;
@@ -74,7 +78,7 @@ char *sstrdup(const char *s)
 }
 
 /* does strndup()'s job, only with the above memory functions */
-char *sstrndup(const char *s, int len)
+char *sstrndup(const char *s, size_t len)
 {
 	char *t;
 

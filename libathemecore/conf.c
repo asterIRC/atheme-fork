@@ -119,12 +119,14 @@ mowgli_list_t conf_la_table;
 
 const char *get_conf_opts(void)
 {
+	const crypt_impl_t *const ci_default = crypt_get_default_provider();
+
 	static char opts[53];
 
 	snprintf(opts, sizeof opts, "%s%s%s%s%s%s%s%s%s%s%s%s%s",
 			match_mapping ? "A" : "",
 			auth_module_loaded ? "a" : "",
-			crypto_module_loaded ? "c" : "",
+			ci_default ? "c" : "",
 			log_debug_enabled() ? "d" : "",
 			me.auth ? "e" : "",
 			config_options.flood_msgs ? "F" : "",
@@ -374,9 +376,18 @@ static int c_uplink(mowgli_config_file_entry_t *ce)
 		}
 	}
 
-	if ((send_password) && (strchr(send_password, ' ')))
-		conf_report_warning(ce, "send_password for uplink %s is invalid (has spaces); continuing anyway", name);
-	if ((receive_password) && (strchr(receive_password, ' ')))
+	if (send_password == NULL || send_password[0] == '\0')
+	{
+		conf_report_warning(ce, "send_password for uplink %s is empty or missing; ignoring uplink", name);
+		return 0;
+	}
+	else if (strchr(send_password, ' ') != NULL)
+	{
+		conf_report_warning(ce, "send_password for uplink %s is invalid (has spaces); ignoring uplink", name);
+		return 0;
+	}
+
+	if (receive_password != NULL && strchr(receive_password, ' ') != NULL)
 		conf_report_warning(ce, "receive_password for uplink %s is invalid (has spaces); continuing anyway", name);
 
 	uplink_add(name, host, send_password, receive_password, vhost, port);

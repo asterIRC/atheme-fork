@@ -10,10 +10,6 @@
 #include "pmodule.h"
 #include "protocol/inspircd.h"
 
-DECLARE_MODULE_V1("protocol/inspircd", true, _modinit, NULL, PACKAGE_STRING, "Atheme Development Group <http://www.atheme.org/>");
-
-/* *INDENT-OFF* */
-
 ircd_t InspIRCd = {
 	.ircdname = "InspIRCd",
 	.tldprefix = "$",
@@ -120,9 +116,9 @@ static mowgli_node_t *inspircd_next_matching_ban(channel_t *c, user_t *u, int ty
 {
 	chanban_t *cb;
 	mowgli_node_t *n;
-	char hostbuf[NICKLEN+USERLEN+HOSTLEN];
-	char realbuf[NICKLEN+USERLEN+HOSTLEN];
-	char ipbuf[NICKLEN+USERLEN+HOSTLEN];
+	char hostbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char realbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char ipbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
 	char *p;
 
 	snprintf(hostbuf, sizeof hostbuf, "%s!%s@%s", u->nick, u->user, u->vhost);
@@ -215,15 +211,12 @@ static int has_protocol = 0;
 #define PROTOCOL_PREFERRED_STR "1202"
 
 /* find a user's server by extracting the SID and looking that up. --nenolod */
-static server_t *sid_find(char *name)
+static server_t *sid_find(const char *name)
 {
 	char sid[4];
 	mowgli_strlcpy(sid, name, 4);
 	return server_find(sid);
 }
-
-
-/* *INDENT-ON* */
 
 static inline void channel_metadata_sts(channel_t *c, const char *key, const char *value)
 {
@@ -727,7 +720,7 @@ static void inspircd_svslogin_sts(char *target, char *nick, char *user, char *ho
 		sts(":%s ENCAP %c%c%c CHGHOST %s %s", me.numeric, target[0], target[1], target[2], target, host);
 }
 
-static void inspircd_sasl_sts(char *target, char mode, char *data)
+static void inspircd_sasl_sts(const char *target, char mode, const char *data)
 {
 	service_t *svs;
 	server_t *s = sid_find(target);
@@ -1133,7 +1126,7 @@ static void m_fmode(sourceinfo_t *si, int parc, char *parv[])
 		c = channel_find(parv[0]);
 		if (c == NULL)
 		{
-			slog(LG_DEBUG, "m_fmode(): nonexistant channel: %s", parv[0]);
+			slog(LG_DEBUG, "m_fmode(): nonexistent channel: %s", parv[0]);
 			return;
 		}
 		ts = atoi(parv[1]);
@@ -1159,13 +1152,13 @@ static void m_kick(sourceinfo_t *si, int parc, char *parv[])
 
 	if (!u)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick for nonexistant user %s", parv[1]);
+		slog(LG_DEBUG, "m_kick(): got kick for nonexistent user %s", parv[1]);
 		return;
 	}
 
 	if (!c)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick in nonexistant channel: %s", parv[0]);
+		slog(LG_DEBUG, "m_kick(): got kick in nonexistent channel: %s", parv[0]);
 		return;
 	}
 
@@ -1271,7 +1264,7 @@ static void m_save(sourceinfo_t *si, int parc, char *parv[])
 
 	if (u->ts != atoi(parv[1]))
 	{
-		slog(LG_DEBUG, "m_save(): ignoring SAVE message for %s, TS doesnt match (%lu != %s)", u->nick, (unsigned long)u->ts, parv[1]);
+		slog(LG_DEBUG, "m_save(): ignoring SAVE message for %s, TS doesn't match (%lu != %s)", u->nick, (unsigned long)u->ts, parv[1]);
 		return;
 	}
 
@@ -1355,7 +1348,10 @@ static void m_encap(sourceinfo_t *si, int parc, char *parv[])
 		smsg.server = si->s;
 
 		if (smsg.parc > SASL_MESSAGE_MAXPARA)
+		{
+			(void) slog(LG_ERROR, "%s: received SASL command with %d parameters", __func__, smsg.parc);
 			smsg.parc = SASL_MESSAGE_MAXPARA;
+		}
 
 		(void) memcpy(smsg.parv, &parv[5], smsg.parc * sizeof(char *));
 
@@ -1651,7 +1647,8 @@ static void server_eob(server_t *s)
 	}
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "transport/rfc1459");
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/base36uid");
@@ -1750,8 +1747,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/inspircd", MODULE_UNLOAD_CAPABILITY_NEVER)

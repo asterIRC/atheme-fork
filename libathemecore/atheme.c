@@ -76,6 +76,8 @@ static void print_help(void)
 	       "-n           Don't fork into the background (log screen + log file)\n"
 	       "-p <file>    Specify the pid file (will be overwritten)\n"
 	       "-D <dir>     Specify the data directory\n"
+	       "-t           Don't run the integrated digest test suite\n"
+	       "-T           Exit after running the integrated digest test suite\n"
 	       "-v           Print version information and exit\n");
 }
 /* *INDENT-ON* */
@@ -256,7 +258,9 @@ static void db_save_periodic(void *unused)
 
 int atheme_main(int argc, char *argv[])
 {
-	int daemonize_pipe[2];
+	int daemonize_pipe[2] = { -1, -1 };
+	bool run_testsuite = true;
+	bool exit_after_testsuite = false;
 	bool have_conf = false;
 	bool have_log = false;
 	bool have_datadir = false;
@@ -272,7 +276,7 @@ int atheme_main(int argc, char *argv[])
 	atheme_bootstrap();
 
 	/* do command-line options */
-	while ((r = mowgli_getopt_long(argc, argv, "c:dhrl:np:D:v", long_opts, NULL)) != -1)
+	while ((r = mowgli_getopt_long(argc, argv, "c:dhrtTl:np:D:v", long_opts, NULL)) != -1)
 	{
 		switch (r)
 		{
@@ -286,7 +290,6 @@ int atheme_main(int argc, char *argv[])
 		  case 'h':
 			  print_help();
 			  exit(EXIT_SUCCESS);
-			  break;
 		  case 'r':
 			  readonly = true;
 			  break;
@@ -296,6 +299,12 @@ int atheme_main(int argc, char *argv[])
 			  break;
 		  case 'n':
 			  runflags |= RF_LIVE;
+			  break;
+		  case 't':
+			  run_testsuite = false;
+			  break;
+		  case 'T':
+			  exit_after_testsuite = true;
 			  break;
 		  case 'p':
 			  pidfilename = mowgli_optarg;
@@ -307,12 +316,16 @@ int atheme_main(int argc, char *argv[])
 		  case 'v':
 			  print_version();
 			  exit(EXIT_SUCCESS);
-			  break;
 		  default:
-			  printf("usage: atheme [-dhnvr] [-c conf] [-l logfile] [-p pidfile]\n");
+			  fprintf(stderr, "usage: atheme [-dhnvr] [-t|-T] [-c conf] [-l logfile] [-p pidfile]\n");
 			  exit(EXIT_FAILURE);
-			  break;
 		}
+	}
+
+	if (! run_testsuite && exit_after_testsuite)
+	{
+		fprintf(stderr, "Error: specify exactly one of -t / -T\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (!have_conf)
@@ -350,6 +363,27 @@ int atheme_main(int argc, char *argv[])
 		fclose(pid_file);
 	}
 #endif
+
+	if (run_testsuite)
+	{
+		(void) slog(LG_INFO, "running digest testsuite...");
+
+		if (! digest_testsuite_run())
+		{
+			(void) slog(LG_ERROR, "digest testsuite failed");
+			exit(EXIT_FAILURE);
+		}
+
+		(void) slog(LG_INFO, "digest testsuite passed");
+
+		if (exit_after_testsuite)
+		{
+			(void) slog(LG_INFO, "exiting due to -T");
+			exit(EXIT_SUCCESS);
+		}
+	}
+	else
+		(void) slog(LG_INFO, "digest testsuite skipped due to -t");
 
 	if (!(runflags & RF_LIVE))
 		daemonize(daemonize_pipe);

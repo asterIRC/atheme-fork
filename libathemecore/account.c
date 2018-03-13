@@ -154,7 +154,7 @@ myuser_t *myuser_add_id(const char *id, const char *name, const char *pass, cons
 	 * immediately converted the first time we start up with crypto.
 	 */
 	if (flags & MU_CRYPTPASS)
-		mowgli_strlcpy(mu->pass, pass, PASSLEN);
+		mowgli_strlcpy(mu->pass, pass, sizeof mu->pass);
 	else
 		set_password(mu, pass);
 
@@ -357,13 +357,13 @@ void myuser_rename(myuser_t *mu, const char *name)
 	user_t *u;
 	hook_user_rename_t data;
 	stringref newname;
-	char nb[NICKLEN];
+	char nb[NICKLEN + 1];
 
 	return_if_fail(mu != NULL);
 	return_if_fail(name != NULL);
-	return_if_fail(strlen(name) < NICKLEN);
+	return_if_fail(strlen(name) < sizeof nb);
 
-	mowgli_strlcpy(nb, entity(mu)->name, NICKLEN);
+	mowgli_strlcpy(nb, entity(mu)->name, sizeof nb);
 	newname = strshare_get(name);
 
 	if (authservice_loaded)
@@ -520,10 +520,10 @@ bool
 myuser_access_verify(user_t *u, myuser_t *mu)
 {
 	mowgli_node_t *n;
-	char buf[USERLEN+HOSTLEN];
-	char buf2[USERLEN+HOSTLEN];
-	char buf3[USERLEN+HOSTLEN];
-	char buf4[USERLEN+HOSTLEN];
+	char buf[USERLEN + 1 + HOSTLEN + 1];
+	char buf2[USERLEN + 1 + HOSTLEN + 1];
+	char buf3[USERLEN + 1 + HOSTLEN + 1];
+	char buf4[USERLEN + 1 + HOSTLEN + 1];
 
 	return_val_if_fail(u != NULL, false);
 	return_val_if_fail(mu != NULL, false);
@@ -688,7 +688,7 @@ mynick_t *mynick_add(myuser_t *mu, const char *name)
 	mn = mowgli_heap_alloc(mynick_heap);
 	object_init(object(mn), name, (destructor_t) mynick_delete);
 
-	mowgli_strlcpy(mn->nick, name, NICKLEN);
+	mowgli_strlcpy(mn->nick, name, sizeof mn->nick);
 	mn->owner = mu;
 	mn->registered = CURRTIME;
 
@@ -766,7 +766,7 @@ myuser_name_t *myuser_name_add(const char *name)
 	mun = mowgli_heap_alloc(myuser_name_heap);
 	object_init(object(mun), name, (destructor_t) myuser_name_delete);
 
-	mowgli_strlcpy(mun->name, name, NICKLEN);
+	mowgli_strlcpy(mun->name, name, sizeof mun->name);
 
 	mowgli_patricia_add(oldnameslist, mun->name, mun);
 
@@ -1213,14 +1213,20 @@ const char *mychan_get_mlock(mychan_t *mc)
 	if (mc->mlock_on)
 	{
 		if (dir != MTYPE_ADD)
-			dir = MTYPE_ADD, mowgli_strlcat(buf, "+", sizeof buf);
+		{
+			dir = MTYPE_ADD;
+			mowgli_strlcat(buf, "+", sizeof buf);
+		}
 		mowgli_strlcat(buf, flags_to_string(mc->mlock_on), sizeof buf);
 	}
 
 	if (mc->mlock_limit)
 	{
 		if (dir != MTYPE_ADD)
-			dir = MTYPE_ADD, mowgli_strlcat(buf, "+", sizeof buf);
+		{
+			dir = MTYPE_ADD;
+			mowgli_strlcat(buf, "+", sizeof buf);
+		}
 		mowgli_strlcat(buf, "l", sizeof buf);
 		mowgli_strlcat(params, " ", sizeof params);
 		mowgli_strlcat(params, number_to_string(mc->mlock_limit), sizeof params);
@@ -1229,7 +1235,10 @@ const char *mychan_get_mlock(mychan_t *mc)
 	if (mc->mlock_key)
 	{
 		if (dir != MTYPE_ADD)
-			dir = MTYPE_ADD, mowgli_strlcat(buf, "+", sizeof buf);
+		{
+			dir = MTYPE_ADD;
+			mowgli_strlcat(buf, "+", sizeof buf);
+		}
 		mowgli_strlcat(buf, "k", sizeof buf);
 		mowgli_strlcat(params, " *", sizeof params);
 	}
@@ -1243,7 +1252,10 @@ const char *mychan_get_mlock(mychan_t *mc)
 			if (p[1] != ' ' && p[1] != '\0')
 			{
 				if (dir != MTYPE_ADD)
-					dir = MTYPE_ADD, *q++ = '+';
+				{
+					dir = MTYPE_ADD;
+					*q++ = '+';
+				}
 				*q++ = *p++;
 				mowgli_strlcat(params, " ", sizeof params);
 				qq = params + strlen(params);
@@ -1266,7 +1278,10 @@ const char *mychan_get_mlock(mychan_t *mc)
 	if (mc->mlock_off)
 	{
 		if (dir != MTYPE_DEL)
-			dir = MTYPE_DEL, mowgli_strlcat(buf, "-", sizeof buf);
+		{
+			dir = MTYPE_DEL;
+			mowgli_strlcat(buf, "-", sizeof buf);
+		}
 		mowgli_strlcat(buf, flags_to_string(mc->mlock_off), sizeof buf);
 		if (mc->mlock_off & CMODE_LIMIT)
 			mowgli_strlcat(buf, "l", sizeof buf);
@@ -1283,7 +1298,10 @@ const char *mychan_get_mlock(mychan_t *mc)
 			if (p[1] == ' ' || p[1] == '\0')
 			{
 				if (dir != MTYPE_DEL)
-					dir = MTYPE_DEL, *q++ = '-';
+				{
+					dir = MTYPE_DEL;
+					*q++ = '-';
+				}
 				*q++ = *p;
 			}
 			p++;
@@ -1414,7 +1432,7 @@ chanacs_t *chanacs_add(mychan_t *mychan, myentity_t *mt, unsigned int level, tim
 	ca->tmodified = ts;
 
 	if (setter != NULL)
-		mowgli_strlcpy(ca->setter_uid, setter->id, IDLEN);
+		mowgli_strlcpy(ca->setter_uid, setter->id, sizeof ca->setter_uid);
 	else
 		ca->setter_uid[0] = '\0';
 
@@ -1468,7 +1486,7 @@ chanacs_t *chanacs_add_host(mychan_t *mychan, const char *host, unsigned int lev
 	ca->tmodified = ts;
 
 	if (setter != NULL)
-		mowgli_strlcpy(ca->setter_uid, setter->id, IDLEN);
+		mowgli_strlcpy(ca->setter_uid, setter->id, sizeof ca->setter_uid);
 	else
 		ca->setter_uid[0] = '\0';
 
@@ -1835,7 +1853,7 @@ bool chanacs_modify(chanacs_t *ca, unsigned int *addflags, unsigned int *removef
 	ca->level = (ca->level | *addflags) & ~*removeflags;
 	ca->tmodified = CURRTIME;
 	if (setter != NULL)
-		mowgli_strlcpy(ca->setter_uid, entity(setter)->id, IDLEN);
+		mowgli_strlcpy(ca->setter_uid, entity(setter)->id, sizeof ca->setter_uid);
 	else
 		ca->setter_uid[0] = '\0';
 
@@ -1902,7 +1920,7 @@ bool chanacs_change(mychan_t *mychan, myentity_t *mt, const char *hostmask, unsi
 			ca->level = (ca->level | *addflags) & ~*removeflags;
 			ca->tmodified = CURRTIME;
 			if (setter != NULL)
-				mowgli_strlcpy(ca->setter_uid, setter->id, IDLEN);
+				mowgli_strlcpy(ca->setter_uid, setter->id, sizeof ca->setter_uid);
 			else
 				ca->setter_uid[0] = '\0';
 
@@ -1943,7 +1961,7 @@ bool chanacs_change(mychan_t *mychan, myentity_t *mt, const char *hostmask, unsi
 			ca->level = (ca->level | *addflags) & ~*removeflags;
 			ca->tmodified = CURRTIME;
 			if (setter != NULL)
-				mowgli_strlcpy(ca->setter_uid, setter->id, IDLEN);
+				mowgli_strlcpy(ca->setter_uid, setter->id, sizeof ca->setter_uid);
 			else
 				ca->setter_uid[0] = '\0';
 

@@ -2,9 +2,9 @@ include ../extra.mk
 
 .PHONY: serno.h
 
-SUBDIRS = inline protocol
+DISTCLEAN	= hooktypes.h serno.h sysconf.h
+SUBDIRS		= inline protocol
 
-DISTCLEAN = hooktypes.h serno.h
 pre-depend: ${DISTCLEAN}
 
 INCLUDES = \
@@ -26,6 +26,11 @@ INCLUDES = \
 	culture.h		\
 	database_backend.h	\
 	datastream.h		\
+	digest.h		\
+	digest_fe_internal.h	\
+	digest_fe_mbedtls.h	\
+	digest_fe_nettle.h	\
+	digest_fe_openssl.h	\
 	entity-validation.h	\
 	entity.h		\
 	flags.h			\
@@ -37,7 +42,6 @@ INCLUDES = \
 	libathemecore.h		\
 	linker.h		\
 	match.h			\
-	md5.h			\
 	module.h		\
 	object.h		\
 	phandler.h		\
@@ -66,8 +70,6 @@ hooktypes.h: hooktypes.in mkhooktypes.sh
 	@sh mkhooktypes.sh hooktypes.in >hooktypes.h
 
 serno.h:
-	$(info Generate: $@)
-	@revh=`git log -1 --pretty=oneline | cut -d' ' -f1 2>/dev/null` || :; \
-	[ -z "$$revh" ] || echo "#define SERNO \"$$revh\"" >serno.h
+	@sh mkserno.sh
 
 include ../buildsys.mk

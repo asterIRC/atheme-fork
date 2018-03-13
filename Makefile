@@ -1,12 +1,12 @@
-SUBDIRS=$(LIBMOWGLI) include libathemecore modules src $(PODIR)
-CLEANDIRS = ${SUBDIRS}
-DISTCLEAN = extra.mk buildsys.mk config.log config.status atheme-services.pc
+SUBDIRS		= include libathemecore $(LIBMOWGLI_COND_D) modules src $(PODIR_COND_D)
+CLEANDIRS	= ${SUBDIRS}
+DISTCLEAN	= atheme-services.pc buildsys.mk config.log config.status extra.mk
 
 -include extra.mk
 -include buildsys.mk
 
 # explicit dependencies need to be expressed to ensure parallel builds don't die
-libathemecore: include $(LIBMOWGLI)
+libathemecore: include $(LIBMOWGLI_COND_D)
 modules: libathemecore
 src: libathemecore
 
@@ -31,18 +31,6 @@ uninstall-extra:
 			${DELETE_FAILED}; \
 		fi \
 	fi
-
-dist:
-	@if [ ! -d .hg ]; then \
-		echo "make dist only works from a mercurial tree"; \
-		false; \
-	fi
-	hg parent --template '#define SERNO "{rev}:{node|short}"\n' >include/serno.h
-	@echo "Creating $(DISTNAME).tar.gz"
-	$(RM) -f $(DISTNAME)
-	$(LN) -s . $(DISTNAME)
-	hg manifest | awk '{ print "$(DISTNAME)/"$$1; } END { print "$(DISTNAME)/configure"; print "$(DISTNAME)/aclocal.m4"; print "$(DISTNAME)/include/sysconf.h.in"; print "$(DISTNAME)/include/serno.h"; }' | $(TAR) -chnzf $(DISTNAME).tar.gz -T /dev/stdin
-	$(RM) $(DISTNAME)
 
 buildsys.mk:
 	@echo "Run ./configure first you idiot."

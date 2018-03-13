@@ -1,27 +1,24 @@
 # Copyright (c) 2010 Atheme Development Group
 # Rights to this code are documented in doc/LICENSE.
 
-PLUGIN = Atheme$(PLUGIN_SUFFIX)
-
-SRCS = Atheme.c perl_command.c perl_utilities.c perl_hooks.c
+PLUGIN		= Atheme$(PLUGIN_SUFFIX)
+SRCS		= Atheme.c perl_command.c perl_hooks.c perl_utilities.c
 
 include ../../../../extra.mk
 include ../../../../buildsys.mk
 
-plugindir = $(MODDIR)/modules/scripting/lib
+plugindir	= $(MODDIR)/modules/scripting/lib
 
-CPPFLAGS += -I../../../../include -I. -I../../../../libmowgli-2/src/libmowgli
-CPPFLAGS += $(PERL_CFLAGS)
-CFLAGS += $(PLUGIN_CFLAGS)
-LDFLAGS += $(PLUGIN_LDFLAGS)
-LIBS += -L../../../../libathemecore -lathemecore ${LDFLAGS_RPATH} -L../../../../libmowgli-2/src/libmowgli
+CPPFLAGS	+= -I../../../../include -I. $(PERL_CFLAGS)
+LDFLAGS		+= -L../../../../libathemecore
+LIBS		+= -lathemecore
+
+CFLAGS		+= $(PLUGIN_CFLAGS)
+LDFLAGS		+= $(PLUGIN_LDFLAGS)
 
 # Some of the code from Perl is not designed to compile with warnings.
-PERL_WARN_HACKS = -Wno-redundant-decls -Wno-float-equal -Wno-unused-value
-PERL_WARN_HACKS += -Wno-nested-externs -Wno-unused-variable -Wno-shadow
-CFLAGS += $(PERL_WARN_HACKS)
-# This does not make any sense, but other warning flags are in CPPFLAGS too.
-CPPFLAGS += $(PERL_WARN_HACKS)
+CFLAGS		+= -Wno-redundant-decls -Wno-float-equal -Wno-unused-value
+CFLAGS		+= -Wno-nested-externs -Wno-unused-variable -Wno-shadow
 
 Atheme.c: $(wildcard *.xs) typemap
 	xsubpp -prototypes -typemap typemap Atheme.xs >$@ || rm -f $@

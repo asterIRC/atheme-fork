@@ -529,7 +529,7 @@ void handle_message(sourceinfo_t *si, char *target, bool is_notice, char *messag
 	char *vec[3];
 	user_t *u, *target_u;
 	char *p;
-	char name2[NICKLEN];
+	char name2[NICKLEN + 1];
 	char *sentinel;
 	mowgli_node_t *n;
 
@@ -680,7 +680,7 @@ void handle_topic_from(sourceinfo_t *si, channel_t *c, const char *setter, time_
 
 void handle_topic(channel_t *c, const char *setter, time_t ts, const char *topic)
 {
-	char newsetter[HOSTLEN], *p;
+	char newsetter[HOSTLEN + 1], *p;
 
 	/* setter can be a nick, nick!user@host or server.
 	 * strip off !user@host part if it's there
@@ -767,7 +767,10 @@ void handle_kill(sourceinfo_t *si, const char *victim, const char *reason)
 	{
 		slog(LG_INFO, "handle_kill(): %s killed service %s (%s)", source, u->nick, reason);
 		if (lastkill != CURRTIME && killcount < 5 + me.me->users)
-			killcount = 0, lastkill = CURRTIME;
+		{
+			killcount = 0;
+			lastkill = CURRTIME;
+		}
 		killcount++;
 		if (killcount < 5 + me.me->users)
 			reintroduce_user(u);

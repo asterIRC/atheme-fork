@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Front-end header for digest interface */
+#undef DIGEST_FE_HEADER
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
@@ -19,8 +22,22 @@
 /* Define to 1 if you have the `asprintf' function. */
 #undef HAVE_ASPRINTF
 
-/* Define if crypt() is available */
+/* Define to 1 if you have the Mac OS X function CFLocaleCopyCurrent in the
+   CoreFoundation framework. */
+#undef HAVE_CFLOCALECOPYCURRENT
+
+/* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
+   the CoreFoundation framework. */
+#undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define to 1 if cracklib is available */
+#undef HAVE_CRACKLIB
+
+/* Define to 1 if crypt(3) is available */
 #undef HAVE_CRYPT
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
 
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
@@ -38,8 +55,14 @@
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
+/* Define to 1 if you have the `getentropy' function. */
+#undef HAVE_GETENTROPY
+
 /* Define to 1 if you have the `getpid' function. */
 #undef HAVE_GETPID
+
+/* Define to 1 if you have the `getrandom' function. */
+#undef HAVE_GETRANDOM
 
 /* Define to 1 if you have the `getrlimit' function. */
 #undef HAVE_GETRLIMIT
@@ -50,20 +73,26 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define if you have the iconv() function. */
+/* Define if you have the iconv() function and it works. */
 #undef HAVE_ICONV
-
-/* Define to 1 if you have the `inet_ntop' function. */
-#undef HAVE_INET_NTOP
-
-/* Define to 1 if you have the `inet_pton' function. */
-#undef HAVE_INET_PTON
 
 /* Define to 1 if the system has the type `intmax_t'. */
 #undef HAVE_INTMAX_T
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if we have GNU libidn available */
+#undef HAVE_LIBIDN
+
+/* Define to 1 if we have ARM mbedTLS available */
+#undef HAVE_LIBMBEDCRYPTO
+
+/* Define to 1 if ARM mbedTLS has HMAC-DRBG support. */
+#undef HAVE_LIBMBEDCRYPTO_HMAC_DRBG
+
+/* Define to 1 if we have libnettle available */
+#undef HAVE_LIBNETTLE
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
@@ -86,8 +115,23 @@
 /* Define to 1 if the system has the type `long double'. */
 #undef HAVE_LONG_DOUBLE
 
-/* Define to 1 if the system has the type `long long int'. */
+/* Define to 1 if the system has the type 'long long int'. */
 #undef HAVE_LONG_LONG_INT
+
+/* Define to 1 if you have the <mbedtls/entropy.h> header file. */
+#undef HAVE_MBEDTLS_ENTROPY_H
+
+/* Define to 1 if you have the <mbedtls/error.h> header file. */
+#undef HAVE_MBEDTLS_ERROR_H
+
+/* Define to 1 if you have the <mbedtls/hmac_drbg.h> header file. */
+#undef HAVE_MBEDTLS_HMAC_DRBG_H
+
+/* Define to 1 if you have the <mbedtls/md.h> header file. */
+#undef HAVE_MBEDTLS_MD_H
+
+/* Define to 1 if you have the <mbedtls/pkcs5.h> header file. */
+#undef HAVE_MBEDTLS_PKCS5_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -95,19 +139,34 @@
 /* Define to 1 if you have the `memset_s' function. */
 #undef HAVE_MEMSET_S
 
-/* Define to 1 if openssl is available */
+/* Define to 1 if you have the <nettle/md5.h> header file. */
+#undef HAVE_NETTLE_MD5_H
+
+/* Define to 1 if you have the <nettle/nettle-meta.h> header file. */
+#undef HAVE_NETTLE_NETTLE_META_H
+
+/* Define to 1 if you have the <nettle/sha1.h> header file. */
+#undef HAVE_NETTLE_SHA1_H
+
+/* Define to 1 if you have the <nettle/sha2.h> header file. */
+#undef HAVE_NETTLE_SHA2_H
+
+/* Define to 1 if OpenSSL is available */
 #undef HAVE_OPENSSL
+
+/* Define to 1 if you have the <openssl/ecdsa.h> header file. */
+#undef HAVE_OPENSSL_ECDSA_H
 
 /* Define to 1 if you have the <openssl/ec.h> header file. */
 #undef HAVE_OPENSSL_EC_H
 
-/* Define to 1 if you have the <openssl/err.h> header file. */
-#undef HAVE_OPENSSL_ERR_H
+/* Define to 1 if you have the <openssl/evp.h> header file. */
+#undef HAVE_OPENSSL_EVP_H
 
-/* Define to 1 if you have the <openssl/ssl.h> header file. */
-#undef HAVE_OPENSSL_SSL_H
+/* Define to 1 if you have the <openssl/hmac.h> header file. */
+#undef HAVE_OPENSSL_HMAC_H
 
-/* Define if you want to use PCRE */
+/* Define to 1 if PCRE is available */
 #undef HAVE_PCRE
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
@@ -146,6 +205,9 @@
 /* Define to 1 if `thousands_sep' is a member of `struct lconv'. */
 #undef HAVE_STRUCT_LCONV_THOUSANDS_SEP
 
+/* Define to 1 if you have the <sys/random.h> header file. */
+#undef HAVE_SYS_RANDOM_H
+
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -158,13 +220,10 @@
 /* Define to 1 if the system has the type `uintptr_t'. */
 #undef HAVE_UINTPTR_T
 
-/* Define to 1 if you have the `umask' function. */
-#undef HAVE_UMASK
-
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if the system has the type `unsigned long long int'. */
+/* Define to 1 if the system has the type 'unsigned long long int'. */
 #undef HAVE_UNSIGNED_LONG_LONG_INT
 
 /* Define to 1 if you have the <varargs.h> header file. */
@@ -182,7 +241,7 @@
 /* Define to 1 if you have the `__va_copy' function or macro. */
 #undef HAVE___VA_COPY
 
-/* Uncomment to enable large network support. */
+/* Enable large network support */
 #undef LARGE_NETWORK
 
 /* Name of package */
@@ -206,7 +265,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Uncomment to enable reproducible builds. */
+/* Enable reproducible builds */
 #undef REPRODUCIBLE_BUILDS
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -234,7 +293,7 @@
 #endif
 
 
-/* Vendor and URL for modules's "vendor" field */
+/* Vendor string for module headers */
 #undef VENDOR_STRING
 
 /* Version number of package */

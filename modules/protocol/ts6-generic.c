@@ -37,8 +37,6 @@
 #include "uplink.h"
 #include "pmodule.h"
 
-DECLARE_MODULE_V1("protocol/ts6-generic", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
-
 static bool use_rserv_support = false;
 static bool use_tb = false;
 static bool use_euid = false;
@@ -46,7 +44,7 @@ static bool use_eopmod = false;
 static bool use_mlock = false;
 
 static void server_eob(server_t *s);
-static server_t *sid_find(char *name);
+static server_t *sid_find(const char *name);
 
 static char ts6sid[3 + 1] = "";
 
@@ -494,7 +492,7 @@ static void ts6_svslogin_sts(char *target, char *nick, char *user, char *host, m
 			target, nick, user, host, entity(account)->name);
 }
 
-static void ts6_sasl_sts(char *target, char mode, char *data)
+static void ts6_sasl_sts(const char *target, char mode, const char *data)
 {
 	service_t *svs;
 	server_t *s = sid_find(target);
@@ -912,7 +910,7 @@ static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 		s = server_find(parv[6]);
 		if (!s)
 		{
-			slog(LG_DEBUG, "m_nick(): new user on nonexistant server: %s", parv[6]);
+			slog(LG_DEBUG, "m_nick(): new user on nonexistent server: %s", parv[6]);
 			return;
 		}
 
@@ -1090,13 +1088,13 @@ static void m_kick(sourceinfo_t *si, int parc, char *parv[])
 
 	if (!u)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick for nonexistant user %s", parv[1]);
+		slog(LG_DEBUG, "m_kick(): got kick for nonexistent user %s", parv[1]);
 		return;
 	}
 
 	if (!c)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick in nonexistant channel: %s", parv[0]);
+		slog(LG_DEBUG, "m_kick(): got kick in nonexistent channel: %s", parv[0]);
 		return;
 	}
 
@@ -1199,7 +1197,8 @@ static void m_pass(sourceinfo_t *si, int parc, char *parv[])
 {
 	/* TS5: PASS mypassword :TS
 	 * TS6: PASS mypassword TS 6 :sid */
-	if (strcmp(curr_uplink->receive_pass, parv[0]))
+	if (curr_uplink->receive_pass != NULL &&
+	    strcmp(curr_uplink->receive_pass, parv[0]))
 	{
 		slog(LG_INFO, "m_pass(): password mismatch from uplink; aborting");
 		runflags |= RF_SHUTDOWN;
@@ -1304,7 +1303,10 @@ static void m_encap(sourceinfo_t *si, int parc, char *parv[])
 		smsg.server = si->s;
 
 		if (smsg.parc > SASL_MESSAGE_MAXPARA)
+		{
+			(void) slog(LG_ERROR, "%s: received SASL command with %d parameters", __func__, smsg.parc);
 			smsg.parc = SASL_MESSAGE_MAXPARA;
+		}
 
 		(void) memcpy(smsg.parv, &parv[5], smsg.parc * sizeof(char *));
 
@@ -1313,7 +1315,7 @@ static void m_encap(sourceinfo_t *si, int parc, char *parv[])
 	else if (!irccasecmp(parv[1], "RSMSG"))
 	{
 		char buf[512];
-		char dest[NICKLEN + HOSTLEN];
+		char dest[NICKLEN + 1 + HOSTLEN + 1];
 		int i;
 
 		if (parc < 4)
@@ -1456,14 +1458,15 @@ static void channel_drop(mychan_t *mc)
 			mc->chan->name);
 }
 
-static server_t *sid_find(char *name)
+static server_t *sid_find(const char *name)
 {
 	char sid[4];
 	mowgli_strlcpy(sid, name, 4);
 	return server_find(sid);
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "transport/rfc1459");
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/base36uid");
@@ -1555,8 +1558,9 @@ void _modinit(module_t * m)
 	m->mflags = MODTYPE_CORE;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/ts6-generic", MODULE_UNLOAD_CAPABILITY_NEVER)

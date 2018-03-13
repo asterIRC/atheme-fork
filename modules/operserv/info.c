@@ -1,30 +1,26 @@
 /*
  * Copyright (c) 2010 Atheme Development Group, et al.
+ * Copyright (c) 2017 ChatLounge IRC Network Development Team
+ *
  * Rights to this code are as documented in doc/LICENSE.
  *
  * This file contains code for OS INFO
- *
  */
 
 #include "atheme.h"
-
-DECLARE_MODULE_V1
-(
-	"operserv/info", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 static void os_cmd_info(sourceinfo_t *si, int parc, char *parv[]);
 
 command_t os_info = { "INFO", N_("Shows some useful information about the current settings of services."), PRIV_SERVER_AUSPEX, 1, os_cmd_info, { .path = "oservice/info" } };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
         service_named_bind_command("operserv", &os_info);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_named_unbind_command("operserv", &os_info);
 }
@@ -58,6 +54,8 @@ static void os_cmd_info(sourceinfo_t *si, int parc, char *parv[])
 		command_success_nodata(si, _("Default channel fantasy trigger: %s"), chansvs.trigger);
 	command_success_nodata(si, _("Maximum number of entries allowed in a channel access list (if 0, unlimited): %d"), chansvs.maxchanacs);
 	command_success_nodata(si, _("Maximum number of founders allowed per channel: %d"), chansvs.maxfounders);
+	command_success_nodata(si, _("Show entity IDs to everyone: %s"),
+		config_options.show_entity_id ? "Yes" : "No");
 
 	if (IS_TAINTED)
 	{
@@ -89,8 +87,4 @@ static void os_cmd_info(sourceinfo_t *si, int parc, char *parv[])
 	hook_call_operserv_info(si);
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("operserv/info", MODULE_UNLOAD_CAPABILITY_OK)

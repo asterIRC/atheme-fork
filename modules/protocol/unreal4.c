@@ -6,7 +6,6 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains protocol support for bahamut-based ircd.
- *
  */
 
 #include "atheme.h"
@@ -14,14 +13,10 @@
 #include "pmodule.h"
 #include "protocol/unreal.h"
 
-DECLARE_MODULE_V1("protocol/unreal", true, _modinit, NULL, PACKAGE_STRING, "Atheme Development Group <http://atheme.github.io>");
-
 static bool has_protoctl = false;
 static bool use_esvid = false;
 static bool use_mlock = false;
 static char ts6sid[3 + 1] = "";
-
-/* *INDENT-OFF* */
 
 ircd_t Unreal = {
 	.ircdname = "UnrealIRCd 4 or later",
@@ -57,6 +52,7 @@ struct cmode_ unreal_mode_list[] = {
   { 's', CMODE_SEC	},
   { 't', CMODE_TOPIC	},
   { 'c', CMODE_NOCOLOR	},
+  { 'D', CMODE_DELAYJOIN	},
   { 'M', CMODE_MODREG	},
   { 'R', CMODE_REGONLY	},
   { 'O', CMODE_OPERONLY },
@@ -66,21 +62,19 @@ struct cmode_ unreal_mode_list[] = {
   { 'K', CMODE_NOKNOCK	},
   { 'V', CMODE_NOINVITE },
   { 'C', CMODE_NOCTCP	},
-  { 'u', CMODE_HIDING	},
   { 'z', CMODE_SSLONLY	},
   { 'N', CMODE_STICKY	},
   { 'G', CMODE_CENSOR	},
   { 'r', CMODE_CHANREG	},
   { 'P', CMODE_PERM	},
+  { 'T', CMODE_NONOTICE	},
   { '\0', 0 }
 };
 
-static bool check_jointhrottle(const char *, channel_t *, mychan_t *, user_t *, myuser_t *);
 static bool check_flood(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu);
 static bool check_forward(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu);
 
 struct extmode unreal_ignore_mode_list[] = {
-  { 'j', check_jointhrottle },
   { 'f', check_flood },
   { 'L', check_forward },
   { '\0', 0 }
@@ -111,32 +105,6 @@ struct cmode_ unreal_user_mode_list[] = {
   { 'd', UF_DEAF     },
   { '\0', 0 }
 };
-
-/* *INDENT-ON* */
-
-static bool check_jointhrottle(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu)
-{
-	const char *p, *arg2;
-
-	p = value, arg2 = NULL;
-	while (*p != '\0')
-	{
-		if (*p == ':')
-		{
-			if (arg2 != NULL)
-				return false;
-			arg2 = p + 1;
-		}
-		else if (!isdigit((unsigned char)*p))
-			return false;
-		p++;
-	}
-	if (arg2 == NULL)
-		return false;
-	if (p - arg2 > 10 || arg2 - value - 1 > 10 || !atoi(value) || !atoi(arg2))
-		return false;
-	return true;
-}
 
 /* +f 3:1 or +f *3:1 (which is like +f [3t]:1 or +f [3t#b]:1) */
 static inline bool check_flood_old(const char *value, channel_t *c, mychan_t *mc, user_t *u, myuser_t *mu)
@@ -252,9 +220,9 @@ static mowgli_node_t *unreal_next_matching_ban(channel_t *c, user_t *u, int type
 {
 	chanban_t *cb;
 	mowgli_node_t *n;
-	char hostbuf[NICKLEN+USERLEN+HOSTLEN];
-	char realbuf[NICKLEN+USERLEN+HOSTLEN];
-	char ipbuf[NICKLEN+USERLEN+HOSTLEN];
+	char hostbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char realbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char ipbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
 	char *p;
 	bool matched;
 	int exttype;
@@ -674,7 +642,7 @@ static void unreal_quarantine_sts(user_t *source, user_t *victim, long duration,
 	sts(":%s SHUN +*@%s %ld :%s", source->nick, victim->host, duration, reason);
 }
 
-static void unreal_sasl_sts(char *target, char mode, char *data)
+static void unreal_sasl_sts(const char *target, char mode, const char *data)
 {
 	char servermask[BUFSIZE], *p;
 	service_t *saslserv;
@@ -690,6 +658,11 @@ static void unreal_sasl_sts(char *target, char mode, char *data)
 		*p = '\0';
 
 	sts(":%s SASL %s %s %c %s", saslserv->me->nick, servermask, target, mode, data);
+}
+
+static void unreal_sasl_mechlist_sts(const char *mechlist)
+{
+	sts("MD client %s saslmechlist :%s", ME, mechlist);
 }
 
 static void unreal_svslogin_sts(char *target, char *nick, char *user, char *host, myuser_t *account)
@@ -772,7 +745,10 @@ static void m_sasl(sourceinfo_t *si, int parc, char *parv[])
 	smsg.server = si->s;
 
 	if (smsg.parc > SASL_MESSAGE_MAXPARA)
+	{
+		(void) slog(LG_ERROR, "%s: received SASL command with %d parameters", __func__, smsg.parc);
 		smsg.parc = SASL_MESSAGE_MAXPARA;
+	}
 
 	(void) memcpy(smsg.parv, &parv[3], smsg.parc * sizeof(char *));
 
@@ -1017,7 +993,7 @@ static void m_uid(sourceinfo_t *si, int parc, char *parv[])
 		s = si->s;
 		if (!s)
 		{
-			slog(LG_DEBUG, "m_uid(): new user on nonexistant server: %s", parv[0]);
+			slog(LG_DEBUG, "m_uid(): new user on nonexistent server: %s", parv[0]);
 			return;
 		}
 
@@ -1104,7 +1080,7 @@ static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 		s = server_find(parv[5]);
 		if (!s)
 		{
-			slog(LG_DEBUG, "m_nick(): new user on nonexistant server: %s", parv[5]);
+			slog(LG_DEBUG, "m_nick(): new user on nonexistent server: %s", parv[5]);
 			return;
 		}
 
@@ -1293,13 +1269,13 @@ static void m_kick(sourceinfo_t *si, int parc, char *parv[])
 
 	if (!u)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick for nonexistant user %s", parv[1]);
+		slog(LG_DEBUG, "m_kick(): got kick for nonexistent user %s", parv[1]);
 		return;
 	}
 
 	if (!c)
 	{
-		slog(LG_DEBUG, "m_kick(): got kick in nonexistant channel: %s", parv[0]);
+		slog(LG_DEBUG, "m_kick(): got kick in nonexistent channel: %s", parv[0]);
 		return;
 	}
 
@@ -1446,7 +1422,8 @@ static void m_join(sourceinfo_t *si, int parc, char *parv[])
 
 static void m_pass(sourceinfo_t *si, int parc, char *parv[])
 {
-	if (strcmp(curr_uplink->receive_pass, parv[0]))
+	if (curr_uplink->receive_pass != NULL &&
+	    strcmp(curr_uplink->receive_pass, parv[0]))
 	{
 		slog(LG_INFO, "m_pass(): password mismatch from uplink; aborting");
 		runflags |= RF_SHUTDOWN;
@@ -1549,7 +1526,8 @@ static void m_protoctl(sourceinfo_t *si, int parc, char *parv[])
 	}
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "transport/rfc1459");
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/base36uid");
@@ -1587,6 +1565,7 @@ void _modinit(module_t * m)
 	holdnick_sts = &unreal_holdnick_sts;
 	chan_lowerts = &unreal_chan_lowerts;
 	sasl_sts = &unreal_sasl_sts;
+	sasl_mechlist_sts = &unreal_sasl_mechlist_sts;
 	svslogin_sts = &unreal_svslogin_sts;
 	quarantine_sts = &unreal_quarantine_sts;
 	mlock_sts = &unreal_mlock_sts;
@@ -1647,8 +1626,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/unreal", MODULE_UNLOAD_CAPABILITY_NEVER)

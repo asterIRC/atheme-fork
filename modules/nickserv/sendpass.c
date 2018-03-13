@@ -3,29 +3,23 @@
  * Rights to this code are as documented in doc/LICENSE.
  *
  * This file contains code for the CService SENDPASS function.
- *
  */
 
 #include "atheme.h"
-
-DECLARE_MODULE_V1
-(
-	"nickserv/sendpass", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[]);
 
 command_t ns_sendpass = { "SENDPASS", N_("Email registration passwords."), PRIV_USER_SENDPASS, 2, ns_cmd_sendpass, { .path = "nickserv/sendpass" } };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_CONFLICT(m, "nickserv/sendpass_user")
 	service_named_bind_command("nickserv", &ns_sendpass);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_named_unbind_command("nickserv", &ns_sendpass);
 }
@@ -186,9 +180,15 @@ static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[])
 		logcommand(si, CMDLOG_ADMIN, "SENDPASS: \2%s\2 (change key)", name);
 
 		key = random_string(12);
-		metadata_add(mu, "private:sendpass:sender", get_oper_name(si));
-		metadata_add(mu, "private:sendpass:timestamp", number_to_string(time(NULL)));
 
+		const char *const hash = crypt_password(key);
+
+		if (!hash)
+		{
+			command_fail(si, fault_internalerror, _("Hash generation for password change key failed."));
+			free(key);
+			return;
+		}
 		if (!sendemail(si->su != NULL ? si->su : si->service->me, mu, EMAIL_SETPASS, mu->email, key))
 		{
 			command_fail(si, fault_emailfail, _("Email send failed."));
@@ -196,7 +196,9 @@ static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[])
 			return;
 		}
 
-		metadata_add(mu, "private:setpass:key", crypt_string(key, gen_salt()));
+		metadata_add(mu, "private:sendpass:sender", get_oper_name(si));
+		metadata_add(mu, "private:sendpass:timestamp", number_to_string(time(NULL)));
+		metadata_add(mu, "private:setpass:key", hash);
 		free(key);
 
 		command_success_nodata(si, _("The password change key for \2%s\2 has been sent to \2%s\2."), entity(mu)->name, mu->email);
@@ -236,8 +238,4 @@ static void ns_cmd_sendpass(sourceinfo_t *si, int parc, char *parv[])
 	}
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("nickserv/sendpass", MODULE_UNLOAD_CAPABILITY_OK)

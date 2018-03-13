@@ -9,51 +9,55 @@
 
 #include "atheme.h"
 
-DECLARE_MODULE_V1
-(
-	"crypto/rawmd5", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
+#define MODULE_PREFIX_STR       "$rawmd5$"
+#define MODULE_PREFIX_LEN       8
+#define MODULE_DIGEST_LEN       DIGEST_MDLEN_MD5
+#define MODULE_PARAMS_LEN       (MODULE_PREFIX_LEN + (2 * MODULE_DIGEST_LEN))
 
-#define RAWMD5_PREFIX "$rawmd5$"
-
-static const char *rawmd5_crypt_string(const char *key, const char *salt)
+static bool
+atheme_rawmd5_verify(const char *const restrict password, const char *const restrict parameters,
+                     unsigned int *const restrict flags)
 {
-	static char output[2 * 16 + sizeof(RAWMD5_PREFIX)];
-	md5_state_t ctx;
-	unsigned char digest[16];
-	int i;
+	if (strlen(parameters) != MODULE_PARAMS_LEN)
+		return false;
 
-	md5_init(&ctx);
-	md5_append(&ctx, (const unsigned char *)key, strlen(key));
-	md5_finish(&ctx, digest);
+	if (strncmp(parameters, MODULE_PREFIX_STR, MODULE_PREFIX_LEN) != 0)
+		return false;
 
-	strcpy(output, RAWMD5_PREFIX);
-	for (i = 0; i < 16; i++)
-		sprintf(output + sizeof(RAWMD5_PREFIX) - 1 + i * 2, "%02x",
-				255 & digest[i]);
+	*flags |= PWVERIFY_FLAG_MYMODULE;
 
-	return output;
+	unsigned char digest[MODULE_DIGEST_LEN];
+
+	if (! digest_oneshot(DIGALG_MD5, password, strlen(password), digest, NULL))
+		return false;
+
+	char result[(2 * MODULE_DIGEST_LEN) + 1];
+
+	for (size_t i = 0; i < sizeof digest; i++)
+		(void) sprintf(result + i * 2, "%02x", 255 & digest[i]);
+
+	if (strcmp(result, parameters + MODULE_PREFIX_LEN) != 0)
+		return false;
+
+	return true;
 }
 
-static crypt_impl_t rawmd5_crypt_impl = {
-	.id = "rawmd5",
-	.crypt = &rawmd5_crypt_string,
+static crypt_impl_t crypto_rawmd5_impl = {
+
+	.id         = "rawmd5",
+	.verify     = &atheme_rawmd5_verify,
 };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t __attribute__((unused)) *const restrict m)
 {
-	crypt_register(&rawmd5_crypt_impl);
+	(void) crypt_register(&crypto_rawmd5_impl);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t __attribute__((unused)) intent)
 {
-	crypt_unregister(&rawmd5_crypt_impl);
+	(void) crypt_unregister(&crypto_rawmd5_impl);
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("crypto/rawmd5", MODULE_UNLOAD_CAPABILITY_OK)

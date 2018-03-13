@@ -5,15 +5,12 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * Dice generator.
- *
  */
 
 #include "atheme.h"
 #include "gameserv_common.h"
 
 #include <math.h>
-
-DECLARE_MODULE_V1("gameserv/dice", false, _modinit, _moddeinit, PACKAGE_STRING, VENDOR_STRING);
 
 static void command_dice(sourceinfo_t *si, int parc, char *parv[]);
 static void command_calc(sourceinfo_t *si, int parc, char *parv[]);
@@ -23,7 +20,8 @@ command_t cmd_calc = { "CALC", N_("Calculate stuff."), AC_NONE, 3, command_calc,
 
 static unsigned int max_rolls = 10;
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	service_t *svs;
 
@@ -40,7 +38,8 @@ void _modinit(module_t * m)
 	add_uint_conf_item("MAX_ROLLS", &svs->conf_table, 0, &max_rolls, 1, INT_MAX, 10);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_t *svs;
 
@@ -363,7 +362,7 @@ static double calc_dice_simple(double lhs, double rhs)
 
 	for (i = 0; i < dice; i++)
 	{
-		out += 1.0 + (arc4random() % sides);
+		out += 1.0 + arc4random_uniform(sides);
 	}
 
 	return out;
@@ -537,7 +536,7 @@ static bool eval_dice(sourceinfo_t *si, char *s_input)
 	snprintf(buffer, 1024, _("\2%s\2 rolled %ud%u: "), si->su->nick, x, y);
 	for (roll = 0; roll < x; ++roll)
 	{
-		snprintf(result, 32, "%d ", dice = (1 + (arc4random() % y)));
+		snprintf(result, 32, "%d ", dice = (1 + arc4random_uniform(y)));
 		mowgli_strlcat(buffer, result, sizeof(buffer));
 		total += dice;
 	}
@@ -641,4 +640,4 @@ static void command_calc(sourceinfo_t *si, int parc, char *parv[])
 			break;
 }
 
-//////////////////////////////////////////////////////////////////////////
+SIMPLE_DECLARE_MODULE_V1("gameserv/dice", MODULE_UNLOAD_CAPABILITY_OK)

@@ -18,13 +18,6 @@
 
 #include "atheme.h"
 
-DECLARE_MODULE_V1
-(
-	"backend/corestorage", true, _modinit, NULL,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
-
 unsigned int dbv;
 unsigned int their_ca_all;
 
@@ -468,8 +461,8 @@ static void corestorage_h_me(database_handle_t *db, const char *type)
 	}
 
 	mz = smalloc(sizeof *mz);
-	mowgli_strlcpy(mz->sender, src, NICKLEN);
-	mowgli_strlcpy(mz->text, text, MEMOLEN);
+	mowgli_strlcpy(mz->sender, src, sizeof mz->sender);
+	mowgli_strlcpy(mz->text, text, sizeof mz->text);
 	mz->sent = sent;
 	mz->status = status;
 
@@ -1016,7 +1009,8 @@ static void corestorage_db_write_blocking(void *filename)
 	db_close(db);
 }
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	m->mflags = MODTYPE_CORE;
 
@@ -1058,8 +1052,9 @@ void _modinit(module_t *m)
 	backend_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("backend/corestorage", MODULE_UNLOAD_CAPABILITY_NEVER)

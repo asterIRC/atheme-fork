@@ -77,11 +77,9 @@ static void connection_trampoline(mowgli_eventloop_t *eventloop, mowgli_eventloo
 	switch (dir) {
 	case MOWGLI_EVENTLOOP_IO_READ:
 		return cptr->read_handler(cptr);
-		break;
 	case MOWGLI_EVENTLOOP_IO_WRITE:
 	default:
 		return cptr->write_handler(cptr);
-		break;
 	}
 }
 
@@ -127,7 +125,7 @@ connection_t *connection_add(const char *name, int fd, unsigned int flags,
 	connection_setselect_write(cptr, write_handler);
 
 	/* set connection name */
-	mowgli_strlcpy(cptr->name, name, HOSTLEN);
+	mowgli_strlcpy(cptr->name, name, sizeof cptr->name);
 
 	if (cptr->fd > -1)
 	{

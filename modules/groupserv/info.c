@@ -3,18 +3,10 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains routines to handle the GroupServ HELP command.
- *
  */
 
 #include "atheme.h"
 #include "groupserv.h"
-
-DECLARE_MODULE_V1
-(
-	"groupserv/info", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 static void gs_cmd_info(sourceinfo_t *si, int parc, char *parv[]);
 
@@ -93,21 +85,29 @@ static void gs_cmd_info(sourceinfo_t *si, int parc, char *parv[])
 	if (*buf)
 		command_success_nodata(si, _("Flags       : %s"), buf);
 
+	if ((md = metadata_find(mg, "joinflags")) != NULL)
+	{
+		command_success_nodata(si, _("Join flags  : %s"), gflags_tostr(ga_flags, atoi(md->value)));
+	}
+
 	command_success_nodata(si, _("\2*** End of Info ***\2"));
 
 	logcommand(si, CMDLOG_GET, "INFO: \2%s\2", parv[0]);
 }
 
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	use_groupserv_main_symbols(m);
 
 	service_named_bind_command("groupserv", &gs_info);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_named_unbind_command("groupserv", &gs_info);
 }
 
+SIMPLE_DECLARE_MODULE_V1("groupserv/info", MODULE_UNLOAD_CAPABILITY_OK)

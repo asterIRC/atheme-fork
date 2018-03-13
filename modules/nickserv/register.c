@@ -3,17 +3,9 @@
  * Rights to this code are as documented in doc/LICENSE.
  *
  * This file contains code for the NickServ REGISTER function.
- *
  */
 
 #include "atheme.h"
-
-DECLARE_MODULE_V1
-(
-	"nickserv/register", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 unsigned int ratelimit_count = 0;
 time_t ratelimit_firsttime = 0;
@@ -22,12 +14,14 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[]);
 
 command_t ns_register = { "REGISTER", N_("Registers a nickname."), AC_NONE, 3, ns_cmd_register, { .path = "nickserv/register" } };
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	service_named_bind_command("nickserv", &ns_register);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_named_unbind_command("nickserv", &ns_register);
 }
@@ -68,10 +62,10 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 		return;
 	}
 
-	if (strlen(pass) >= PASSLEN)
+	if (strlen(pass) > PASSLEN)
 	{
 		command_fail(si, fault_badparams, STR_INVALID_PARAMS, "REGISTER");
-		command_fail(si, fault_badparams, _("Registration passwords may not be longer than \2%d\2 characters."), PASSLEN - 1);
+		command_fail(si, fault_badparams, _("Registration passwords may not be longer than \2%u\2 characters."), PASSLEN);
 		return;
 	}
 
@@ -97,7 +91,7 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 		}
 	}
 
-	if (strlen(account) >= NICKLEN)
+	if (strlen(account) > NICKLEN)
 	{
 		command_fail(si, fault_badparams, _("The account name \2%s\2 is invalid."), account);
 		return;
@@ -157,6 +151,9 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 		command_fail(si, fault_toomany, _("\2%s\2 has too many accounts registered."), email);
 		return;
 	}
+
+	if (si->su && !auth_module_loaded && !crypt_get_default_provider())
+		(void) command_success_nodata(si, "%s", _("Warning: Your password will not be encrypted."));
 
 	mu = myuser_add(account, auth_module_loaded ? "*" : pass, email, config_options.defuflags | MU_NOBURSTLOGIN | (auth_module_loaded ? MU_CRYPTPASS : 0));
 	mu->registered = CURRTIME;
@@ -248,8 +245,4 @@ static void ns_cmd_register(sourceinfo_t *si, int parc, char *parv[])
 	}
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("nickserv/register", MODULE_UNLOAD_CAPABILITY_OK)

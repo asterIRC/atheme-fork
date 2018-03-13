@@ -57,13 +57,6 @@
 #include "atheme.h"
 #include "conf.h"
 
-DECLARE_MODULE_V1
-(
-	"proxyscan/dnsbl", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
-
 mowgli_list_t blacklist_list = { NULL, NULL, 0 };
 mowgli_patricia_t **os_set_cmdtree;
 
@@ -405,7 +398,7 @@ static struct Blacklist *new_blacklist(char *name)
 		mowgli_node_add(object_ref(blptr), &blptr->node, &blacklist_list);
 	}
 
-	mowgli_strlcpy(blptr->host, name, IRCD_RES_HOSTLEN + 1);
+	mowgli_strlcpy(blptr->host, name, sizeof blptr->host);
 	blptr->lastwarning = 0;
 
 	return blptr;
@@ -603,8 +596,8 @@ static void db_h_ble(database_handle_t *db, const char *type)
 	mowgli_node_add(de, &de->node, &dnsbl_elist);
 }
 
-void
-_modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	service_t *proxyscan;
 
@@ -644,8 +637,8 @@ _modinit(module_t *m)
 	command_add(&os_set_dnsblaction, *os_set_cmdtree);
 }
 
-void
-_moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	service_t *proxyscan;
 
@@ -668,8 +661,4 @@ _moddeinit(module_unload_intent_t intent)
 	service_unbind_command(proxyscan, &ps_dnsblscan);
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("proxyscan/dnsbl", MODULE_UNLOAD_CAPABILITY_OK)

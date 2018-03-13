@@ -5,17 +5,12 @@
  * This file contains protocol support for P10 ircd's.
  * Some sources used: Run's documentation, beware's description,
  * raw data sent by nefarious.
- *
  */
 
 #include "atheme.h"
 #include "uplink.h"
 #include "pmodule.h"
 #include "protocol/nefarious.h"
-
-DECLARE_MODULE_V1("protocol/nefarious", true, _modinit, NULL, PACKAGE_STRING, VENDOR_STRING);
-
-/* *INDENT-OFF* */
 
 ircd_t Nefarious = {
 	.ircdname = "Nefarious IRCU 0.4.0 or later",
@@ -96,8 +91,6 @@ struct cmode_ nefarious_user_mode_list[] = {
 };
 
 static void check_hidehost(user_t *u);
-
-/* *INDENT-ON* */
 
 /* join a channel */
 static void nefarious_join_sts(channel_t *c, user_t *u, bool isnew, char *modes)
@@ -181,7 +174,7 @@ static bool nefarious_on_logout(user_t *u, const char *account)
 	return false;
 }
 
-static void nefarious_sasl_sts(char *target, char mode, char *data)
+static void nefarious_sasl_sts(const char *target, char mode, const char *data)
 {
 	sts("%s SASL %c%c %s %c %s", me.numeric, target[0], target[1], target, mode, data);
 }
@@ -238,7 +231,7 @@ static void m_burst(sourceinfo_t *si, int parc, char *parv[])
 	unsigned int i;
 	int j;
 	char prefix[16];
-	char newnick[16+NICKLEN];
+	char newnick[sizeof prefix + NICKLEN + 1];
 	char *p;
 	time_t ts;
 	int bantype;
@@ -356,7 +349,7 @@ static void m_burst(sourceinfo_t *si, int parc, char *parv[])
 static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 {
 	user_t *u;
-	char ipstring[HOSTIPLEN];
+	char ipstring[HOSTIPLEN + 1];
 	char *p;
 	int i;
 
@@ -398,7 +391,7 @@ static void m_nick(sourceinfo_t *si, int parc, char *parv[])
 				}
 				else
 				{
-					char userbuf[USERLEN];
+					char userbuf[USERLEN + 1];
 
 					strshare_unref(u->vhost);
 					u->vhost = strshare_get(p + 1);
@@ -491,7 +484,7 @@ static void m_mode(sourceinfo_t *si, int parc, char *parv[])
 				}
 				else
 				{
-					char userbuf[USERLEN];
+					char userbuf[USERLEN + 1];
 
 					strshare_unref(u->vhost);
 					u->vhost = strshare_get(p + 1);
@@ -658,7 +651,10 @@ static void m_sasl(sourceinfo_t *si, int parc, char *parv[])
 	smsg.server = si->s;
 
 	if (smsg.parc > SASL_MESSAGE_MAXPARA)
+	{
+		(void) slog(LG_ERROR, "%s: received SASL command with %d parameters", __func__, smsg.parc);
 		smsg.parc = SASL_MESSAGE_MAXPARA;
+	}
 
 	(void) memcpy(smsg.parv, &parv[3], smsg.parc * sizeof(char *));
 
@@ -705,7 +701,8 @@ static void p10_kline_sts(const char *server, const char *user, const char *host
 	sts("%s GL * +%s@%s %ld %lu :%s", me.numeric, user, host, duration > 0 ? duration : 2419200, (unsigned long)CURRTIME, reason);
 }
 
-void _modinit(module_t * m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/p10-generic");
 
@@ -753,8 +750,9 @@ void _modinit(module_t * m)
 	pmodule_loaded = true;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+static void
+mod_deinit(const module_unload_intent_t intent)
+{
+}
+
+SIMPLE_DECLARE_MODULE_V1("protocol/nefarious", MODULE_UNLOAD_CAPABILITY_NEVER)

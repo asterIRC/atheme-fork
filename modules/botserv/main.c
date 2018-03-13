@@ -3,18 +3,10 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains the main() routine.
- *
  */
 
 #include "atheme.h"
 #include "botserv.h"
-
-DECLARE_MODULE_V1
-(
-	"botserv/main", true, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	"Rizon Development Group <http://www.atheme.org>"
-);
 
 static void bs_join(hook_channel_joinpart_t *hdata);
 static void bs_part(hook_channel_joinpart_t *hdata);
@@ -40,7 +32,7 @@ service_t *botsvs;
 
 unsigned int min_users = 0;
 
-E mowgli_list_t mychan;
+extern mowgli_list_t mychan;
 
 mowgli_list_t bs_bots;
 
@@ -491,7 +483,7 @@ static void db_h_bot(database_handle_t *db, const char *type)
 	if (!is_valid_username(user))
 		user = "botserv";
 
-	bot->user = sstrndup(user, USERLEN - 1);
+	bot->user = sstrndup(user, USERLEN);
 	bot->host = sstrdup(host);
 	bot->real = sstrdup(real);
 	bot->private = private;
@@ -635,7 +627,7 @@ static void bs_cmd_change(sourceinfo_t *si, int parc, char *parv[])
 	switch(parc)
 	{
 		case 5:
-			if (strlen(parv[4]) < GECOSLEN)
+			if (strlen(parv[4]) <= GECOSLEN)
 			{
 				free(bot->real);
 				bot->real = sstrdup(parv[4]);
@@ -649,7 +641,7 @@ static void bs_cmd_change(sourceinfo_t *si, int parc, char *parv[])
 			/* XXX: we really need an is_valid_user(), but this is close enough. --nenolod */
 			if (is_valid_username(parv[2])) {
 				free(bot->user);
-				bot->user = sstrndup(parv[2], USERLEN - 1);
+				bot->user = sstrndup(parv[2], USERLEN);
 			} else
 				command_fail(si, fault_badparams, _("\2%s\2 is an invalid username, not changing it."), parv[2]);
 		case 2:
@@ -733,7 +725,7 @@ static void bs_cmd_add(sourceinfo_t *si, int parc, char *parv[])
 	if (!check_vhost_validity(si, parv[2]))
 		return;
 
-	if (strlen(parv[3]) >= GECOSLEN)
+	if (strlen(parv[3]) > GECOSLEN)
 	{
 		command_fail(si, fault_badparams, _("\2%s\2 is an invalid realname."), parv[3]);
 		return;
@@ -741,7 +733,7 @@ static void bs_cmd_add(sourceinfo_t *si, int parc, char *parv[])
 
 	bot = scalloc(sizeof(botserv_bot_t), 1);
 	bot->nick = sstrdup(parv[0]);
-	bot->user = sstrndup(parv[1], USERLEN - 1);
+	bot->user = sstrndup(parv[1], USERLEN);
 	bot->host = sstrdup(parv[2]);
 	bot->real = sstrdup(buf);
 	bot->private = false;
@@ -968,7 +960,8 @@ static void bs_cmd_unassign(sourceinfo_t *si, int parc, char *parv[])
 
 /* ******************************************************************** */
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	if (!module_find_published("backend/opensex"))
 	{
@@ -1020,7 +1013,8 @@ void _modinit(module_t *m)
 	notice                = bs_notice;
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	mowgli_node_t *n, *tn;
 
@@ -1172,8 +1166,4 @@ bs_part(hook_channel_joinpart_t *hdata)
 	}
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("botserv/main", MODULE_UNLOAD_CAPABILITY_NEVER)

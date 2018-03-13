@@ -1,5 +1,5 @@
 /* chanfix - channel fixing service
- * 
+ *
  * Copyright (c) 2010-2016 Atheme Development Group
  * Copyright (c) 2014-2016 Austin Ellis <siniStar@IRC4Fun.net>
  */
@@ -353,7 +353,7 @@ static void chanfix_cmd_list(sourceinfo_t *si, int parc, char *parv[])
 	char buf[BUFSIZE];
 	mowgli_patricia_iteration_state_t state;
 	unsigned int matches = 0;
-	bool marked = false, nofix = false, markmatch, nofixmatch;
+	bool marked = false, nofix = false, markmatch = false, nofixmatch = false;
 	char *chanpattern = NULL;
 
 	if (parv[0] != NULL)

@@ -24,128 +24,145 @@
 #include "atheme.h"
 
 static mowgli_list_t crypt_impl_list = { NULL, NULL, 0 };
-bool crypto_module_loaded = false;
 
-static const char *generic_crypt_string(const char *str, const char *salt)
+static inline void
+crypt_log_modchg(const char *const restrict caller, const char *const restrict which,
+                 const crypt_impl_t *const restrict impl)
 {
-	return str;
+	const unsigned int level = (runflags & RF_STARTING) ? LG_DEBUG : LG_INFO;
+	const crypt_impl_t *const ci = crypt_get_default_provider();
+
+	(void) slog(level, "%s: %s crypto provider '%s'", caller, which, impl->id);
+
+	if (ci)
+		(void) slog(level, "%s: default crypto provider is (now) '%s'", caller, ci->id);
+	else
+		(void) slog(LG_ERROR, "%s: no encryption-capable crypto provider is available!", caller);
 }
 
-static const char *generic_gen_salt(void)
+void
+crypt_register(crypt_impl_t *const restrict impl)
 {
-	static char buf[BUFSIZE];
-	char *ht = random_string(6);
+	if (! impl || ! impl->id || ! (impl->crypt || impl->verify))
+	{
+		(void) slog(LG_ERROR, "%s: invalid parameters (BUG)", __func__);
+		return;
+	}
 
-	mowgli_strlcpy(buf, "$1$", BUFSIZE);
-	mowgli_strlcat(buf, ht, BUFSIZE);
-	mowgli_strlcat(buf, "$", BUFSIZE);
-
-	free(ht);
-
-	return buf;
+	(void) mowgli_node_add(impl, &impl->node, &crypt_impl_list);
+	(void) crypt_log_modchg(__func__, "registered", impl);
 }
 
-static bool generic_needs_param_upgrade(const char *user_pass_string)
+void
+crypt_unregister(crypt_impl_t *const restrict impl)
 {
-	return 0;
+	if (! impl || ! impl->id || ! (impl->crypt || impl->verify))
+	{
+		(void) slog(LG_ERROR, "%s: invalid parameters (BUG)", __func__);
+		return;
+	}
+
+	(void) mowgli_node_delete(&impl->node, &crypt_impl_list);
+	(void) crypt_log_modchg(__func__, "unregistered", impl);
 }
 
-static const crypt_impl_t fallback_crypt_impl = {
-	.id = "plaintext",
-	.crypt = &generic_crypt_string,
-	.salt = &generic_gen_salt,
-	.needs_param_upgrade = &generic_needs_param_upgrade,
-};
-
-const crypt_impl_t *crypt_get_default_provider(void)
-{
-	crypt_impl_t *ci;
-
-	if (!MOWGLI_LIST_LENGTH(&crypt_impl_list))
-		return &fallback_crypt_impl;
-
-	/* top of stack should handle string crypting, should be populated by now */
-	return_val_if_fail(crypt_impl_list.head != NULL, &fallback_crypt_impl);
-	ci = crypt_impl_list.head->data;
-
-	/* ensure the provider is populated */
-	return_val_if_fail(ci->crypt != NULL, &fallback_crypt_impl);
-	return_val_if_fail(ci->salt != NULL, &fallback_crypt_impl);
-
-	return ci;
-}
-
-/*
- * crypt_string is just like crypt(3) under UNIX
- * systems. Modules provide this function, otherwise
- * it returns the string unencrypted.
- */
-const char *crypt_string(const char *key, const char *salt)
-{
-	const crypt_impl_t *ci = crypt_get_default_provider();
-
-	return ci->crypt(key, salt);
-}
-
-const char *gen_salt(void)
-{
-	const crypt_impl_t *ci = crypt_get_default_provider();
-
-	return ci->salt();
-}
-
-void crypt_register(crypt_impl_t *impl)
-{
-	return_if_fail(impl != NULL);
-
-	if (impl->crypt == NULL)
-		impl->crypt = &generic_crypt_string;
-	if (impl->salt == NULL)
-		impl->salt = &generic_gen_salt;
-
-	mowgli_node_add(impl, &impl->node, &crypt_impl_list);
-
-	crypto_module_loaded = MOWGLI_LIST_LENGTH(&crypt_impl_list) > 0 ? true : false;
-}
-
-void crypt_unregister(crypt_impl_t *impl)
-{
-	return_if_fail(impl != NULL);
-
-	mowgli_node_delete(&impl->node, &crypt_impl_list);
-
-	crypto_module_loaded = MOWGLI_LIST_LENGTH(&crypt_impl_list) > 0 ? true : false;
-}
-
-/*
- * crypt_verify_password is a frontend to crypt_string().
- */
-const crypt_impl_t *crypt_verify_password(const char *uinput, const char *pass)
+const crypt_impl_t *
+crypt_get_default_provider(void)
 {
 	mowgli_node_t *n;
-	const char *cstr;
 
 	MOWGLI_ITER_FOREACH(n, crypt_impl_list.head)
 	{
-		crypt_impl_t *ci;
+		const crypt_impl_t *const ci = n->data;
 
-		ci = n->data;
-		cstr = ci->crypt(uinput, pass);
-
-		if (cstr != NULL && !strcmp(cstr, pass))
+		if (ci->crypt)
 			return ci;
 	}
-
-	cstr = fallback_crypt_impl.crypt(uinput, pass);
-
-	if (!strcmp(cstr, pass))
-		return &fallback_crypt_impl;
 
 	return NULL;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+const crypt_impl_t *
+crypt_verify_password(const char *const restrict password, const char *const restrict parameters,
+                      unsigned int *const restrict flags)
+{
+	mowgli_node_t *n;
+
+	MOWGLI_ITER_FOREACH(n, crypt_impl_list.head)
+	{
+		const crypt_impl_t *const ci = n->data;
+
+		if (ci->verify)
+		{
+			unsigned int myflags = PWVERIFY_FLAG_NONE;
+
+			if (ci->verify(password, parameters, &myflags))
+			{
+				if (flags)
+					*flags = myflags;
+
+				return ci;
+			}
+
+			/* If password verification failed and the password hash was produced
+			 * by the module we just tried, there's no point continuing to test it
+			 * against the other modules. This saves some CPU time.
+			 */
+			if (myflags & PWVERIFY_FLAG_MYMODULE)
+				return NULL;
+
+			continue;
+		}
+
+		if (ci->crypt)
+		{
+			const char *const result = ci->crypt(password, parameters);
+
+			if (result && strcmp(result, parameters) == 0)
+				return ci;
+
+			continue;
+		}
+	}
+
+	return NULL;
+}
+
+const char *
+crypt_password(const char *const restrict password)
+{
+	bool encryption_capable_module = false;
+
+	mowgli_node_t *n;
+
+	MOWGLI_ITER_FOREACH(n, crypt_impl_list.head)
+	{
+		const crypt_impl_t *const ci = n->data;
+
+		if (! ci->crypt)
+		{
+			(void) slog(LG_DEBUG, "%s: skipping incapable provider '%s'", __func__, ci->id);
+			continue;
+		}
+
+		encryption_capable_module = true;
+
+		const char *const result = ci->crypt(password, NULL);
+
+		if (! result)
+		{
+			(void) slog(LG_ERROR, "%s: ci->crypt() failed for provider '%s'", __func__, ci->id);
+			continue;
+		}
+
+		(void) slog(LG_DEBUG, "%s: encrypted password with provider '%s'", __func__, ci->id);
+		return result;
+	}
+
+	if (encryption_capable_module)
+		(void) slog(LG_ERROR, "%s: all encryption-capable crypto providers failed", __func__);
+	else
+		(void) slog(LG_ERROR, "%s: no encryption-capable crypto provider is available!", __func__);
+
+	return NULL;
+}

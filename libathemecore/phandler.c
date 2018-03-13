@@ -57,7 +57,7 @@ void (*fnc_sts) (user_t *source, user_t *u, const char *newnick, int type) = gen
 void (*holdnick_sts)(user_t *source, int duration, const char *nick, myuser_t *account) = generic_holdnick_sts;
 void (*invite_sts) (user_t *source, user_t *target, channel_t *channel) = generic_invite_sts;
 void (*svslogin_sts) (char *target, char *nick, char *user, char *host, myuser_t *account) = generic_svslogin_sts;
-void (*sasl_sts) (char *target, char mode, char *data) = generic_sasl_sts;
+void (*sasl_sts) (const char *target, char mode, const char *data) = generic_sasl_sts;
 void (*sasl_mechlist_sts) (const char *mechlist) = generic_sasl_mechlist_sts;
 mowgli_node_t *(*next_matching_ban)(channel_t *c, user_t *u, int type, mowgli_node_t *first) = generic_next_matching_ban;
 mowgli_node_t *(*next_matching_host_chanacs)(mychan_t *mc, user_t *u, mowgli_node_t *first) = generic_next_matching_host_chanacs;
@@ -291,7 +291,7 @@ void generic_svslogin_sts(char *target, char *nick, char *user, char *host, myus
 	/* nothing to do here. */
 }
 
-void generic_sasl_sts(char *target, char mode, char *data)
+void generic_sasl_sts(const char *target, char mode, const char *data)
 {
 	/* nothing to do here. */
 }
@@ -305,10 +305,10 @@ mowgli_node_t *generic_next_matching_ban(channel_t *c, user_t *u, int type, mowg
 {
 	chanban_t *cb;
 	mowgli_node_t *n;
-	char hostbuf[NICKLEN+USERLEN+HOSTLEN];
-	char cloakbuf[NICKLEN+USERLEN+HOSTLEN];
-	char realbuf[NICKLEN+USERLEN+HOSTLEN];
-	char ipbuf[NICKLEN+USERLEN+HOSTLEN];
+	char hostbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char cloakbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char realbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char ipbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
 
 	snprintf(hostbuf, sizeof hostbuf, "%s!%s@%s", u->nick, u->user, u->vhost);
 	snprintf(cloakbuf, sizeof cloakbuf, "%s!%s@%s", u->nick, u->user, u->chost);
@@ -330,9 +330,9 @@ mowgli_node_t *generic_next_matching_host_chanacs(mychan_t *mc, user_t *u, mowgl
 {
 	chanacs_t *ca;
 	mowgli_node_t *n;
-	char hostbuf[NICKLEN+USERLEN+HOSTLEN];
-	char hostbuf2[NICKLEN+USERLEN+HOSTLEN];
-	char ipbuf[NICKLEN+USERLEN+HOSTLEN];
+	char hostbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char hostbuf2[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
+	char ipbuf[NICKLEN + 1 + USERLEN + 1 + HOSTLEN + 1];
 
 	snprintf(hostbuf, sizeof hostbuf, "%s!%s@%s", u->nick, u->user, u->vhost);
 	snprintf(hostbuf2, sizeof hostbuf2, "%s!%s@%s", u->nick, u->user, u->chost);

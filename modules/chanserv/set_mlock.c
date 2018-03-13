@@ -4,17 +4,9 @@
  * Rights to this code are documented in doc/LICENSE.
  *
  * This file contains routines to handle the CService SET MLOCK command.
- *
  */
 
 #include "atheme.h"
-
-DECLARE_MODULE_V1
-(
-	"chanserv/set_mlock", false, _modinit, _moddeinit,
-	PACKAGE_STRING,
-	VENDOR_STRING
-);
 
 static void cs_cmd_set_mlock(sourceinfo_t *si, int parc, char *parv[]);
 
@@ -22,14 +14,16 @@ command_t cs_set_mlock = { "MLOCK", N_("Sets channel mode lock."), AC_NONE, 2, c
 
 mowgli_patricia_t **cs_set_cmdtree;
 
-void _modinit(module_t *m)
+static void
+mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_SYMBOL(m, cs_set_cmdtree, "chanserv/set_core", "cs_set_cmdtree");
 
 	command_add(&cs_set_mlock, *cs_set_cmdtree);
 }
 
-void _moddeinit(module_unload_intent_t intent)
+static void
+mod_deinit(const module_unload_intent_t intent)
 {
 	command_delete(&cs_set_mlock, *cs_set_cmdtree);
 }
@@ -42,7 +36,7 @@ static void cs_cmd_set_mlock(sourceinfo_t *si, int parc, char *parv[])
 	int newlock_on = 0, newlock_off = 0, newlock_limit = 0, flag = 0;
 	unsigned int mask, changed;
 	bool mask_ext;
-	char newlock_key[KEYLEN];
+	char newlock_key[KEYLEN + 1];
 	char newlock_ext[ignore_mode_list_size][512];
 	bool newlock_ext_off[ignore_mode_list_size];
 	char newext[512];
@@ -112,9 +106,9 @@ static void cs_cmd_set_mlock(sourceinfo_t *si, int parc, char *parv[])
 					  command_fail(si, fault_badparams, _("You need to specify a value for mode +%c."), 'k');
 					  return;
 				  }
-				  else if (strlen(arg) >= KEYLEN)
+				  else if (strlen(arg) > KEYLEN)
 				  {
-					  command_fail(si, fault_badparams, _("MLOCK key is too long (%d > %d)."), (int)strlen(arg), KEYLEN - 1);
+					  command_fail(si, fault_badparams, _("MLOCK key is too long (%zu > %u)."), strlen(arg), KEYLEN);
 					  return;
 				  }
 				  else if (strchr(arg, ',') || arg[0] == ':')
@@ -310,8 +304,4 @@ static void cs_cmd_set_mlock(sourceinfo_t *si, int parc, char *parv[])
 	return;
 }
 
-/* vim:cinoptions=>s,e0,n0,f0,{0,}0,^0,=s,ps,t0,c3,+s,(2s,us,)20,*30,gs,hs
- * vim:ts=8
- * vim:sw=8
- * vim:noexpandtab
- */
+SIMPLE_DECLARE_MODULE_V1("chanserv/set_mlock", MODULE_UNLOAD_CAPABILITY_OK)
