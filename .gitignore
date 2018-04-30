@@ -61,5 +61,5 @@ extra.mk
 tags
 .deps
 aclocal.m4
-
+run/
 *.dylib

@@ -14,7 +14,7 @@
 #endif
 
 #ifndef VALID_CHANNEL_PFX
-#define VALID_CHANNEL_PFX(name)		(VALID_GLOBAL_CHANNEL_PFX(name) || *(name) == '&')
+#define VALID_CHANNEL_PFX(name)		(VALID_GLOBAL_CHANNEL_PFX(name) || *(name) == '&' || *(name) == '\'')
 #endif
 struct channel_
 {

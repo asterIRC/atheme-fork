@@ -4,6 +4,7 @@
 MODULE		= protocol
 
 SRCS =				\
+        irca.c			\
 	asuka.c			\
 	bahamut.c		\
 	base36uid.c		\
