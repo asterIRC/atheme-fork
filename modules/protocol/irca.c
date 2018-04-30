@@ -316,7 +316,7 @@ mod_init(module_t *const restrict m)
 	pcommand_delete("EUID");
 	pcommand_add("EUID", m_euid, 11, MSRC_SERVER);
 
-	ircd = &Seven;
+	ircd = &IRCa;
 
 	hook_add_event("nick_group");
 	hook_add_nick_group(nick_group);
