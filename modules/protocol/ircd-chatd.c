@@ -14,8 +14,6 @@
 //#define CMODE_KICKNOREJOIN 0x80000000 /* shadowircd +J */
 #define CMODE_DELJOINS 0x100000000 /* shadowircd +J */
 
-DECLARE_MODULE_V1("protocol/ircd-chatd", true, _modinit, NULL, PACKAGE_STRING, "Shaltúre developers <https://github.com/shalture>");
-
 /* *INDENT-OFF* */
 
 ircd_t Chatd = {
@@ -334,3 +332,5 @@ void _modinit(module_t * m)
  * vim:sw=8
  * vim:noexpandtab
  */
+
+DECLARE_MODULE_V1("protocol/ircd-chatd", true, _modinit, NULL, PACKAGE_STRING, "Shaltúre developers <https://github.com/shalture>");
