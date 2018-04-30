@@ -303,13 +303,13 @@ mod_init(module_t *const restrict m)
 {
 	MODULE_TRY_REQUEST_DEPENDENCY(m, "protocol/charybdis");
 
-	mode_list = seven_mode_list;
-	user_mode_list = seven_user_mode_list;
+	mode_list = IRCa_mode_list;
+	user_mode_list = IRCa_user_mode_list;
 
-	wallops_sts = &seven_wallops_sts;
-	ircd_on_login = &seven_on_login;
-	ircd_on_logout = &seven_on_logout;
-	is_valid_host = &seven_is_valid_hostslash;
+	wallops_sts = &IRCa_wallops_sts;
+	ircd_on_login = &IRCa_on_login;
+	ircd_on_logout = &IRCa_on_logout;
+	is_valid_host = &IRCa_is_valid_hostslash;
 
 	pcommand_delete("NICK");
 	pcommand_add("NICK", m_nick, 2, MSRC_USER | MSRC_SERVER);
