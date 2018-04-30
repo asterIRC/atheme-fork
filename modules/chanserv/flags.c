@@ -240,6 +240,9 @@ static void cs_cmd_flags(sourceinfo_t *si, int parc, char *parv[])
 	 * about their whole 'stealing our design' thing that they have been doing in 1.9 since the
 	 * beginning...  or do i mean 'innovating?'
 	 *
+	 * notes from ellenor/eamon: nenolod, why are you so flusterated by Anope? I mean if you want
+	 * i can pull request on them to support the atheme syntax.
+	 *
 	 * anyway we rewrite the commands as appropriate in the two if blocks below so that they
 	 * are processed by the flags code as the user would intend.  obviously, we're not really
 	 * capable of handling the anope flag model (which makes honestly zero sense to me, and is
