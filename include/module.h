@@ -12,6 +12,10 @@
 #include "privs.h"
 #include "abirev.h"
 
+void _modinit(module_t *m);
+void _moddeinit(module_unload_intent_t intent);
+// sigh, some modules still use old names...
+
 typedef enum {
 	MODULE_UNLOAD_INTENT_PERM            = 0,
 	MODULE_UNLOAD_INTENT_RELOAD          = 1,
