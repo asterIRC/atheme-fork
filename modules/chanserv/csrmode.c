@@ -23,10 +23,10 @@ static void register_hook(hook_channel_req_t *hdata)
 		return;
 
 	// The idea of this module is you unconditionally want permanence on all registered channels
-	//modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_PERM);
+	//modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
 
-	if ((mc->chan->modes & CMODE_PERM) == 0x0)
-		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_PERM);
+	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
+		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
 }
 
 static void join_hook(hook_channel_req_t *hdata)
@@ -36,8 +36,8 @@ static void join_hook(hook_channel_req_t *hdata)
 	if (mc == NULL || mc->chan == NULL)
 		return;
 
-	if ((mc->chan->modes & CMODE_PERM) == 0x0)
-		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_PERM);
+	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
+		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
 }
 
 static void drop_hook(mychan_t *mc)
@@ -45,7 +45,7 @@ static void drop_hook(mychan_t *mc)
 	if (mc == NULL || mc->chan == NULL)
 		return;
 
-	modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_DEL, CMODE_PERM);
+	modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_DEL, CMODE_CHANREG);
 }
 
 void
