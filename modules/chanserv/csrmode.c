@@ -6,7 +6,7 @@
  * Set/unset AsterIRC-style channel mode +r on registration/deregistration.
  */
 
-#include "atheme-compat.h"
+#include "atheme.h"
 
 DECLARE_MODULE_V1
 (
