@@ -27,7 +27,19 @@ static void register_hook(hook_channel_req_t *hdata)
 
 	mc->mlock_on |= CMODE_CHANREG;
 
-	if (mc == NULL)
+	if (mc->chan == NULL)
+		return;
+
+	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
+		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
+}
+
+static void join_hook(hook_channel_joinpart_t *hdata)
+{
+	channel_t *chan = hdata->cu->chan;
+	mychan_t *mc = mychan_find(chan->name);
+
+	if (mc->chan == NULL)
 		return;
 
 	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
@@ -48,6 +60,9 @@ _modinit(module_t *m)
 	hook_add_event("channel_register");
 	hook_add_channel_register(register_hook);
 
+	hook_add_event("channel_join");
+	hook_add_channel_join(join_hook);
+
 	hook_add_event("channel_drop");
 	hook_add_channel_drop(drop_hook);
 }
@@ -56,5 +71,6 @@ void
 _moddeinit(module_unload_intent_t intent)
 {
 	hook_del_channel_register(register_hook);
+	hook_del_channel_join(join_hook);
 	hook_del_channel_drop(drop_hook);
 }
