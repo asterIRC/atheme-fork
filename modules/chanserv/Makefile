@@ -16,6 +16,7 @@ SRCS =				\
 	clone.c			\
 	close.c			\
 	count.c			\
+	csrmode.c		\
 	drop.c			\
 	fflags.c		\
 	flags.c			\
