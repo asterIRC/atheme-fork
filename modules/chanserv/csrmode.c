@@ -29,9 +29,9 @@ static void register_hook(hook_channel_req_t *hdata)
 		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
 }
 
-static void join_hook(hook_channel_req_t *hdata)
+static void join_hook(hook_channel_joinpart_t *hdata)
 {
-	mychan_t *mc = hdata->mc;
+	mychan_t *mc = hdata->cu->chan->mychan;
 
 	if (mc == NULL || mc->chan == NULL)
 		return;
