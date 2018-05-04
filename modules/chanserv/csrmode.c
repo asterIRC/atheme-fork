@@ -36,11 +36,23 @@ static void register_hook(hook_channel_req_t *hdata)
 
 static void join_hook(hook_channel_joinpart_t *hdata)
 {
-	channel_t *chan = hdata->cu->chan;
-	mychan_t *mc = mychan_find(chan->name);
+	chanuser_t *cu = hdata->cu;
+	user_t *u;
+	channel_t *chan;
+	mychan_t *mc;
 
-	if (mc->chan == NULL)
+	if (cu == NULL || is_internal_client(cu->user))
+		return; // forget it, no fucking one will see
+
+	chan = cu->chan;
+
+	if (chan == NULL)
 		return;
+
+	mc = mychan_find(chan->name);
+
+	if (mc == NULL)
+		return; // not registered
 
 	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
 		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
