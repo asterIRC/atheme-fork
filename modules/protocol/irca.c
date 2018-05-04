@@ -305,6 +305,8 @@ mod_init(module_t *const restrict m)
 
 	mode_list = IRCa_mode_list;
 	user_mode_list = IRCa_user_mode_list;
+	status_mode_list = IRCa_status_mode_list;
+	prefix_mode_list = IRCa_prefix_mode_list;
 
 	wallops_sts = &IRCa_wallops_sts;
 	ircd_on_login = &IRCa_on_login;
