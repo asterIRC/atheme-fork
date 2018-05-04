@@ -19,21 +19,15 @@ static void register_hook(hook_channel_req_t *hdata)
 {
 	mychan_t *mc = hdata->mc;
 
-	if (mc == NULL || mc->chan == NULL)
+	if (mc == NULL)
 		return;
 
 	// The idea of this module is you unconditionally want permanence on all registered channels
 	//modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
 
-	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
-		modestack_mode_simple(chansvs.nick, mc->chan, MTYPE_ADD, CMODE_CHANREG);
-}
+	mc->mlock_on |= CMODE_CHANREG;
 
-static void join_hook(hook_channel_joinpart_t *hdata)
-{
-	mychan_t *mc = hdata->cu->chan->mychan;
-
-	if (mc == NULL || mc->chan == NULL)
+	if (mc == NULL)
 		return;
 
 	if ((mc->chan->modes & CMODE_CHANREG) == 0x0)
@@ -52,9 +46,7 @@ void
 _modinit(module_t *m)
 {
 	hook_add_event("channel_register");
-	hook_add_event("channel_join");
 	hook_add_channel_register(register_hook);
-	hook_add_channel_join(join_hook);
 
 	hook_add_event("channel_drop");
 	hook_add_channel_drop(drop_hook);
@@ -65,5 +57,4 @@ _moddeinit(module_unload_intent_t intent)
 {
 	hook_del_channel_register(register_hook);
 	hook_del_channel_drop(drop_hook);
-	hook_del_channel_join(join_hook);
 }
