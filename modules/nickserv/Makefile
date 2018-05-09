@@ -6,6 +6,7 @@ MODULE		= nickserv
 SRCS =				\
 	main.c			\
 	access.c		\
+	ajoin.c		\
 	badmail.c		\
 	cert.c			\
 	$(CRACKLIB_COND_C)	\
