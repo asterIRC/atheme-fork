@@ -336,6 +336,10 @@ static void do_listen(connection_t *cptr)
 	struct httpddata *hd;
 
 	newptr = connection_accept_tcp(cptr, recvq_put, NULL);
+	if (newptr == NULL) {
+		slog(LG_DEBUG, "do_listen(): accepted httpd from NULL fd NULL; escaping!");
+		return; // ???
+	}
 	slog(LG_DEBUG, "do_listen(): accepted httpd from %s fd %d", newptr->hbuf, newptr->fd);
 	hd = smalloc(sizeof(*hd));
 	hd->requestbuf = NULL;

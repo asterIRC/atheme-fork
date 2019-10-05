@@ -133,6 +133,16 @@ static void IRCa_wallops_sts(const char *reason)
 	sts(":%s ENCAP * SNOTE s :%s", ME, reason);
 }
 
+
+static void IRCa_wallchops(user_t *sender, channel_t *channel, const char *message)
+{
+	if (chanuser_find(channel, sender))
+		sts(":%s PRIVMSG @o.%s :%s", CLIENT_NAME(sender), channel->name,
+				message);
+	else /* do not join for this, everyone would see -- jilles */
+		generic_wallchops(sender, channel, message);
+}
+
 /* The following m_functions are copied from generic_ts6, with additions to handle the
  * "identified" / "owns this nick" flag.
  */
@@ -307,6 +317,7 @@ mod_init(module_t *const restrict m)
 	user_mode_list = IRCa_user_mode_list;
 	status_mode_list = IRCa_status_mode_list;
 	prefix_mode_list = IRCa_prefix_mode_list;
+	wallchops = &IRCa_wallchops;
 
 	wallops_sts = &IRCa_wallops_sts;
 	ircd_on_login = &IRCa_on_login;
